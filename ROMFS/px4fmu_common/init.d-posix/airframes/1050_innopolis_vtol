@@ -50,5 +50,5 @@ param set-default VT_TYPE 2
 
 set MAV_TYPE 22
 
-set MIXER_FILE etc/mixers-sitl/standard_vtol_sitl.main.mix
+set MIXER_FILE etc/mixers-sitl/inno_vtol_sitl.main.mix
 set MIXER custom
