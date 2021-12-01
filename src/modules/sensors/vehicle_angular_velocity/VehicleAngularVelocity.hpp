@@ -76,11 +76,11 @@ public:
 private:
 	void Run() override;
 
-	void CalibrateAndPublish(bool publish, const hrt_abstime &timestamp_sample, const matrix::Vector3f &angular_velocity,
-				 const matrix::Vector3f &angular_acceleration);
+	bool CalibrateAndPublish(const hrt_abstime &timestamp_sample, const matrix::Vector3f &angular_velocity_uncalibrated,
+				 const matrix::Vector3f &angular_acceleration_uncalibrated);
 
 	inline float FilterAngularVelocity(int axis, float data[], int N = 1);
-	inline float FilterAngularAcceleration(int axis, float dt_s, float data[], int N = 1);
+	inline float FilterAngularAcceleration(int axis, float inverse_dt_s, float data[], int N = 1);
 
 	void DisableDynamicNotchEscRpm();
 	void DisableDynamicNotchFFT();
@@ -120,7 +120,6 @@ private:
 	matrix::Vector3f _bias{};
 
 	matrix::Vector3f _angular_velocity{};
-	matrix::Vector3f _angular_velocity_prev{};
 	matrix::Vector3f _angular_acceleration{};
 
 	matrix::Vector3f _angular_velocity_raw_prev{};
@@ -157,8 +156,13 @@ private:
 	hrt_abstime _last_esc_rpm_notch_update[MAX_NUM_ESC_RPM] {};
 
 	perf_counter_t _dynamic_notch_filter_esc_rpm_update_perf{nullptr};
-	perf_counter_t _dynamic_notch_filter_fft_update_perf{nullptr};
+	perf_counter_t _dynamic_notch_filter_esc_rpm_reset_perf{nullptr};
+	perf_counter_t _dynamic_notch_filter_esc_rpm_disable_perf{nullptr};
 	perf_counter_t _dynamic_notch_filter_esc_rpm_perf{nullptr};
+
+	perf_counter_t _dynamic_notch_filter_fft_disable_perf{nullptr};
+	perf_counter_t _dynamic_notch_filter_fft_reset_perf{nullptr};
+	perf_counter_t _dynamic_notch_filter_fft_update_perf{nullptr};
 	perf_counter_t _dynamic_notch_filter_fft_perf{nullptr};
 
 	bool _dynamic_notch_esc_rpm_available{false};
@@ -172,13 +176,15 @@ private:
 
 	bool _reset_filters{true};
 	bool _fifo_available{false};
+	bool _update_sample_rate{true};
 
 	perf_counter_t _filter_reset_perf{perf_alloc(PC_COUNT, MODULE_NAME": gyro filter reset")};
 	perf_counter_t _selection_changed_perf{perf_alloc(PC_COUNT, MODULE_NAME": gyro selection changed")};
 
 	DEFINE_PARAMETERS(
 #if !defined(CONSTRAINED_FLASH)
-		(ParamInt<px4::params::IMU_GYRO_DYN_NF>) _param_imu_gyro_dyn_nf,
+		(ParamInt<px4::params::IMU_GYRO_DNF_EN>) _param_imu_gyro_dnf_en,
+		(ParamFloat<px4::params::IMU_GYRO_DNF_BW>) _param_imu_gyro_dnf_bw,
 #endif // !CONSTRAINED_FLASH
 		(ParamFloat<px4::params::IMU_GYRO_CUTOFF>) _param_imu_gyro_cutoff,
 		(ParamFloat<px4::params::IMU_GYRO_NF_FREQ>) _param_imu_gyro_nf_freq,

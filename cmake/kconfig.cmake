@@ -194,10 +194,12 @@ if(EXISTS ${BOARD_DEFCONFIG})
 	if (NOT CONSTRAINED_FLASH AND NOT EXTERNAL_METADATA AND NOT ${PX4_BOARD_LABEL} STREQUAL "test")
 		list(APPEND romfs_extra_files
 			${PX4_BINARY_DIR}/parameters.json.xz
-			${PX4_BINARY_DIR}/events/all_events.json.xz)
+			${PX4_BINARY_DIR}/events/all_events.json.xz
+			${PX4_BINARY_DIR}/actuators.json.xz)
 		list(APPEND romfs_extra_dependencies
 			parameters_xml
-			events_json)
+			events_json
+			actuators_json)
 	endif()
 	list(APPEND romfs_extra_files ${PX4_BINARY_DIR}/component_general.json.xz)
 	list(APPEND romfs_extra_dependencies component_general_json)
@@ -257,16 +259,6 @@ if(EXISTS ${BOARD_DEFCONFIG})
 	# ROMFS
 	if(ROMFSROOT)
 		set(config_romfs_root ${ROMFSROOT} CACHE INTERNAL "ROMFS root" FORCE)
-
-		if(BUILD_BOOTLOADER)
-			set(config_build_bootloader "1" CACHE INTERNAL "build bootloader" FORCE)
-		endif()
-
-		# IO board (placed in ROMFS)
-		if(IO)
-			set(config_io_board ${IO} CACHE INTERNAL "IO" FORCE)
-			add_definitions(-DBOARD_WITH_IO)
-		endif()
 
 		if(UAVCAN_PERIPHERALS)
 			set(config_uavcan_peripheral_firmware ${UAVCAN_PERIPHERALS} CACHE INTERNAL "UAVCAN peripheral firmware" FORCE)

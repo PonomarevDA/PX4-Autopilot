@@ -33,6 +33,7 @@
 
 #pragma once
 
+#include "actuator_test.hpp"
 #include "functions.hpp"
 
 #include <board_config.h>
@@ -50,7 +51,7 @@
 #include <uORB/topics/actuator_armed.h>
 #include <uORB/topics/actuator_controls.h>
 #include <uORB/topics/actuator_outputs.h>
-#include <uORB/topics/multirotor_motor_limits.h>
+#include <uORB/topics/control_allocator_status.h>
 #include <uORB/topics/parameter_update.h>
 #include <uORB/topics/test_motor.h>
 
@@ -130,7 +131,9 @@ public:
 	/**
 	 * Check if a function is configured, i.e. not set to Disabled and initialized
 	 */
-	bool isFunctionSet(int index) const { return !_use_dynamic_mixing || _functions[index] != nullptr; };
+	bool isFunctionSet(int index) const { return !_use_dynamic_mixing || _functions[index] != nullptr; }
+
+	OutputFunction outputFunction(int index) const { return _function_assignment[index]; }
 
 	/**
 	 * Call this regularly from Run(). It will call interface.updateOutputs().
@@ -294,7 +297,7 @@ private:
 	uORB::SubscriptionCallbackWorkItem _control_subs[actuator_controls_s::NUM_ACTUATOR_CONTROL_GROUPS];
 
 	uORB::PublicationMulti<actuator_outputs_s> _outputs_pub{ORB_ID(actuator_outputs)};
-	uORB::PublicationMulti<multirotor_motor_limits_s> _to_mixer_status{ORB_ID(multirotor_motor_limits)}; 	///< mixer status flags
+	uORB::PublicationMulti<control_allocator_status_s> _control_allocator_status_pub{ORB_ID(control_allocator_status)};
 
 	actuator_controls_s _controls[actuator_controls_s::NUM_ACTUATOR_CONTROL_GROUPS] {};
 	actuator_armed_s _armed{};
@@ -340,6 +343,7 @@ private:
 	const char *const _param_prefix;
 	ParamHandles _param_handles[MAX_ACTUATORS];
 	hrt_abstime _lowrate_schedule_interval{300_ms};
+	ActuatorTest _actuator_test{_function_assignment};
 
 	uORB::SubscriptionCallbackWorkItem *_subscription_callback{nullptr}; ///< current scheduling callback
 

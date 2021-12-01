@@ -136,13 +136,13 @@ if [[ $INSTALL_NUTTX == "true" ]]; then
 		genromfs \
 		gettext \
 		gperf \
-		kconfig-frontends \
 		libelf-dev \
 		libexpat-dev \
 		libgmp-dev \
 		libisl-dev \
 		libmpc-dev \
 		libmpfr-dev \
+		libncurses5 \
 		libncurses5-dev \
 		libncursesw5-dev \
 		libtool \
@@ -153,6 +153,12 @@ if [[ $INSTALL_NUTTX == "true" ]]; then
 		util-linux \
 		vim-common \
 		;
+	if [[ "${UBUNTU_RELEASE}" == "20.04" ]]; then
+		sudo DEBIAN_FRONTEND=noninteractive apt-get -y --quiet --no-install-recommends install \
+		kconfig-frontends \
+		;
+	fi
+
 
 	if [ -n "$USER" ]; then
 		# add user to dialout group (serial port access)

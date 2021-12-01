@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-""" Script to params from module.yaml config file(s)
+""" Script to generate params from module.yaml config file(s)
     Note: serial params are handled in Tools/serial/generate_config.py
 """
 
 import argparse
 import os
 import sys
+from copy import deepcopy
 
 from output_groups_from_timer_config import get_timer_groups, get_output_groups
 
@@ -49,10 +50,15 @@ board = args.board
 root_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)),"../..")
 output_functions_file = os.path.join(root_dir,"src/lib/mixer_module/output_functions.yaml")
 
+def process_module_name(module_name):
+    if module_name == '${PWM_MAIN_OR_AUX}':
+        if board_with_io: return 'PWM AUX'
+        return 'PWM MAIN'
+    if '${' in module_name:
+        raise Exception('unhandled variable in {:}'.format(module_name))
+    return module_name
+
 def process_param_prefix(param_prefix):
-    if param_prefix == '${PWM_MAIN_OR_HIL}':
-        if board == 'px4_sitl': return 'PWM_MAIN'
-        return 'HIL_ACT'
     if param_prefix == '${PWM_MAIN_OR_AUX}':
         if board_with_io: return 'PWM_AUX'
         return 'PWM_MAIN'
@@ -60,16 +66,16 @@ def process_param_prefix(param_prefix):
         raise Exception('unhandled variable in {:}'.format(param_prefix))
     return param_prefix
 
-def process_channel_label(channel_label):
-    if channel_label == '${PWM_MAIN_OR_HIL}':
-        if board == 'px4_sitl': return 'PWM Sim'
-        return 'HIL actuator'
+def process_channel_label(module_name, channel_label, no_prefix):
+    if channel_label == '${PWM_MAIN_OR_AUX_CAP}':
+        return 'PWM Capture'
     if channel_label == '${PWM_MAIN_OR_AUX}':
         if board_with_io: return 'PWM Aux'
         return 'PWM Main'
     if '${' in channel_label:
         raise Exception('unhandled variable in {:}'.format(channel_label))
-    return channel_label
+    if no_prefix: return channel_label
+    return module_name + ' ' + channel_label
 
 
 def parse_yaml_parameters_config(yaml_config, ethernet_supported):
@@ -144,7 +150,7 @@ def parse_yaml_parameters_config(yaml_config, ethernet_supported):
  */
 PARAM_DEFINE_{param_type}({name}, {default_value});
 '''.format(short_descr=param['description']['short'].replace("\n", "\n * "),
-           long_descr=param['description']['long'].replace("\n", "\n * "),
+           long_descr=param['description'].get('long', "").replace("\n", "\n * "),
            tags=tags,
            param_type=param_type,
            name=param_name.replace('${i}', str(i+instance_start)),
@@ -161,6 +167,7 @@ def get_actuator_output_params(yaml_config, output_functions,
     if not 'actuator_output' in yaml_config:
         return {}
     output_groups = yaml_config['actuator_output']['output_groups']
+    module_name = process_module_name(yaml_config['module_name'])
     all_params = {}
     group_idx = 0
 
@@ -182,7 +189,9 @@ def get_actuator_output_params(yaml_config, output_functions,
         if 'generator' in group:
             if group['generator'] == 'pwm':
                 param_prefix = process_param_prefix(group['param_prefix'])
-                channel_labels = [process_channel_label(label) for label in group['channel_labels']]
+                no_prefix = not group.get('channel_label_module_name_prefix', True)
+                channel_labels = [process_channel_label(module_name, label, no_prefix)
+                    for label in group['channel_labels']]
                 standard_params = group.get('standard_params', [])
                 extra_function_groups = group.get('extra_function_groups', [])
                 pwm_timer_param = group.get('pwm_timer_param', None)
@@ -197,13 +206,29 @@ def get_actuator_output_params(yaml_config, output_functions,
                     verbose=verbose)
                 all_params.update(timer_params)
                 output_groups.extend(timer_output_groups)
+
+                # In case of a board w/o IO and >8 PWM channels, pwm_out splits
+                # into 2 instances (if SYS_CTRL_ALLOC==0) and we need to add the
+                # PWM_AUX min/max/disarmed params as well.
+                num_channels = len(timer_groups['types'])
+                if not board_with_io and num_channels > 8:
+                    output_groups.append(
+                        {
+                            'param_prefix': 'PWM_AUX',
+                            'channel_label': 'PWM AUX',
+                            'instance_start': 1,
+                            'num_channels': num_channels - 8,
+                            'standard_params': deepcopy(timer_output_groups[0]['standard_params'])
+                        })
+
             else:
                 raise Exception('unknown generator {:}'.format(group['generator']))
             continue
 
         num_channels = group['num_channels']
         param_prefix = process_param_prefix(group['param_prefix'])
-        channel_label = process_channel_label(group['channel_label'])
+        no_prefix = not group.get('channel_label_module_name_prefix', True)
+        channel_label = process_channel_label(module_name, group['channel_label'], no_prefix)
         standard_params = group.get('standard_params', {})
         instance_start = group.get('instance_start', 1)
         instance_start_label = group.get('instance_start_label', instance_start)
@@ -219,6 +244,8 @@ def get_actuator_output_params(yaml_config, output_functions,
                 function_name_label = function_name.replace('_', ' ')
                 if isinstance(group[function_name], int):
                     output_function_values[group[function_name]] = function_name_label
+                elif not 'count' in group[function_name]:
+                    output_function_values[group[function_name]['start']] = function_name_label
                 else:
                     start = group[function_name]['start']
                     count = group[function_name]['count']

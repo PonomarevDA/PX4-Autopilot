@@ -65,6 +65,8 @@ FixedwingAttitudeControl::FixedwingAttitudeControl(bool vtol) :
 	_pitch_ctrl.set_max_rate_pos(radians(_param_fw_acro_y_max.get()));
 	_pitch_ctrl.set_max_rate_neg(radians(_param_fw_acro_y_max.get()));
 	_yaw_ctrl.set_max_rate(radians(_param_fw_acro_z_max.get()));
+
+	_rate_ctrl_status_pub.advertise();
 }
 
 FixedwingAttitudeControl::~FixedwingAttitudeControl()
@@ -186,7 +188,8 @@ FixedwingAttitudeControl::vehicle_manual_poll(const float yaw_body)
 						-_manual_control_setpoint.x * _param_fw_man_p_sc.get() + _param_trim_pitch.get();
 					_actuators.control[actuator_controls_s::INDEX_YAW] =
 						_manual_control_setpoint.r * _param_fw_man_y_sc.get() + _param_trim_yaw.get();
-					_actuators.control[actuator_controls_s::INDEX_THROTTLE] = math::constrain(_manual_control_setpoint.z, 0.0f, 1.0f);
+					_actuators.control[actuator_controls_s::INDEX_THROTTLE] = math::constrain(_manual_control_setpoint.z, 0.0f,
+							1.0f);
 				}
 			}
 		}

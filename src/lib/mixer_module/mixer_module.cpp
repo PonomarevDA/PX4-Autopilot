@@ -96,12 +96,6 @@ _param_prefix(param_prefix)
 
 	px4_sem_init(&_lock, 0, 1);
 
-	// Enforce the existence of the test_motor topic, so we won't miss initial publications
-	test_motor_s test{};
-	uORB::Publication<test_motor_s> test_motor_pub{ORB_ID(test_motor)};
-	test_motor_pub.publish(test);
-	_motor_test.test_motor_sub.subscribe();
-
 	_use_dynamic_mixing = _param_sys_ctrl_alloc.get();
 
 	if (_use_dynamic_mixing) {
@@ -113,6 +107,8 @@ _param_prefix(param_prefix)
 
 		updateParams();
 	}
+
+	_outputs_pub.advertise();
 }
 
 MixingOutput::~MixingOutput()
@@ -122,6 +118,8 @@ MixingOutput::~MixingOutput()
 	px4_sem_destroy(&_lock);
 
 	cleanupFunctions();
+
+	_outputs_pub.unadvertise();
 }
 
 void MixingOutput::initParamHandles()
@@ -387,7 +385,7 @@ bool MixingOutput::updateSubscriptionsDynamicMixer(bool allow_wq_switch, bool li
 
 	cleanupFunctions();
 
-	const FunctionProviderBase::Context context{_interface, _reversible_motors};
+	const FunctionProviderBase::Context context{_interface, _reversible_motors, _param_thr_mdl_fac.reference()};
 	int provider_indexes[MAX_ACTUATORS] {};
 	int next_provider = 0;
 	int subscription_callback_provider_index = INT_MAX;
@@ -472,6 +470,8 @@ bool MixingOutput::updateSubscriptionsDynamicMixer(bool allow_wq_switch, bool li
 
 	setMaxTopicUpdateRate(_max_topic_update_interval_us);
 	_need_function_update = false;
+
+	_actuator_test.reset();
 
 	unlock();
 
@@ -775,10 +775,8 @@ bool MixingOutput::updateDynamicMixer()
 		_interface.ScheduleDelayed(50_ms);
 	}
 
-	// check for motor test (after topic updates)
-	if (!_armed.armed && !_armed.manual_lockdown) {
-		// TODO
-	}
+	// check for actuator test
+	_actuator_test.update(_max_num_outputs, _reversible_motors, _param_thr_mdl_fac.get());
 
 	// get output values
 	float outputs[MAX_ACTUATORS];
@@ -801,6 +799,10 @@ bool MixingOutput::updateDynamicMixer()
 	}
 
 	if (!all_disabled) {
+		if (!_armed.armed && !_armed.manual_lockdown) {
+			_actuator_test.overrideValues(outputs, _max_num_outputs);
+		}
+
 		limitAndUpdateOutputs(outputs, has_updates);
 	}
 
@@ -811,8 +813,8 @@ void
 MixingOutput::limitAndUpdateOutputs(float outputs[MAX_ACTUATORS], bool has_updates)
 {
 	/* the output limit call takes care of out of band errors, NaN and constrains */
-	output_limit_calc(_throttle_armed, armNoThrottle(), _max_num_outputs, _reverse_output_mask,
-			  _disarmed_value, _min_value, _max_value, outputs, _current_output_value, &_output_limit);
+	output_limit_calc(_throttle_armed || _actuator_test.inTestMode(), armNoThrottle(), _max_num_outputs,
+			  _reverse_output_mask, _disarmed_value, _min_value, _max_value, outputs, _current_output_value, &_output_limit);
 
 	/* overwrite outputs in case of force_failsafe with _failsafe_value values */
 	if (_armed.force_failsafe) {
@@ -821,7 +823,7 @@ MixingOutput::limitAndUpdateOutputs(float outputs[MAX_ACTUATORS], bool has_updat
 		}
 	}
 
-	bool stop_motors = !_throttle_armed;
+	bool stop_motors = !_throttle_armed && !_actuator_test.inTestMode();
 
 	/* overwrite outputs in case of lockdown with disarmed values */
 	if (_armed.lockdown || _armed.manual_lockdown) {
@@ -861,11 +863,51 @@ MixingOutput::publishMixerStatus(const actuator_outputs_s &actuator_outputs)
 	saturation_status.value = _mixers->get_saturation_status();
 
 	if (saturation_status.flags.valid) {
-		multirotor_motor_limits_s motor_limits;
-		motor_limits.timestamp = actuator_outputs.timestamp;
-		motor_limits.saturation_status = saturation_status.value;
+		control_allocator_status_s sat{};
+		sat.timestamp = hrt_absolute_time();
+		sat.torque_setpoint_achieved = true;
+		sat.thrust_setpoint_achieved = true;
 
-		_to_mixer_status.publish(motor_limits);
+		// Note: the values '-1', '1' and '0' are just to indicate a negative,
+		// positive or no saturation to the rate controller. The actual magnitude
+		// is not used.
+		if (saturation_status.flags.roll_pos) {
+			sat.unallocated_torque[0] = 1.f;
+			sat.torque_setpoint_achieved = false;
+
+		} else if (saturation_status.flags.roll_neg) {
+			sat.unallocated_torque[0] = -1.f;
+			sat.torque_setpoint_achieved = false;
+		}
+
+		if (saturation_status.flags.pitch_pos) {
+			sat.unallocated_torque[1] = 1.f;
+			sat.torque_setpoint_achieved = false;
+
+		} else if (saturation_status.flags.pitch_neg) {
+			sat.unallocated_torque[1] = -1.f;
+			sat.torque_setpoint_achieved = false;
+		}
+
+		if (saturation_status.flags.yaw_pos) {
+			sat.unallocated_torque[2] = 1.f;
+			sat.torque_setpoint_achieved = false;
+
+		} else if (saturation_status.flags.yaw_neg) {
+			sat.unallocated_torque[2] = -1.f;
+			sat.torque_setpoint_achieved = false;
+		}
+
+		if (saturation_status.flags.thrust_pos) {
+			sat.unallocated_thrust[2] = 1.f;
+			sat.thrust_setpoint_achieved = false;
+
+		} else if (saturation_status.flags.thrust_neg) {
+			sat.unallocated_thrust[2] = -1.f;
+			sat.thrust_setpoint_achieved = false;
+		}
+
+		_control_allocator_status_pub.publish(sat);
 	}
 }
 
