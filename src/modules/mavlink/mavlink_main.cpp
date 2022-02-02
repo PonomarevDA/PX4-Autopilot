@@ -338,31 +338,46 @@ Mavlink::get_instance_for_network_port(unsigned long port)
 int
 Mavlink::destroy_all_instances()
 {
-	LockGuard lg{mavlink_module_mutex};
-	unsigned iterations = 0;
-
 	PX4_INFO("waiting for instances to stop");
 
-	for (Mavlink *inst_to_del : mavlink_module_instances) {
-		if (inst_to_del != nullptr) {
-			/* set flag to stop thread and wait for all threads to finish */
-			inst_to_del->request_stop();
+	unsigned iterations = 0;
 
-			while (inst_to_del->running()) {
-				printf(".");
-				fflush(stdout);
-				px4_usleep(10000);
-				iterations++;
+	while (iterations < 1000) {
+		int running = 0;
 
-				if (iterations > 1000) {
-					PX4_ERR("Couldn't stop all mavlink instances.");
-					return PX4_ERROR;
+		pthread_mutex_lock(&mavlink_module_mutex);
+
+		for (Mavlink *inst_to_del : mavlink_module_instances) {
+			if (inst_to_del != nullptr) {
+				if (inst_to_del->running()) {
+					running++;
+
+					// set flag to stop thread and wait for all threads to finish
+					inst_to_del->request_stop();
 				}
 			}
 		}
+
+		pthread_mutex_unlock(&mavlink_module_mutex);
+
+		if (running == 0) {
+			break;
+
+		} else if (iterations > 1000) {
+			PX4_ERR("Couldn't stop all mavlink instances.");
+			return PX4_ERROR;
+
+		} else {
+			iterations++;
+			printf(".");
+			fflush(stdout);
+			px4_usleep(10000);
+		}
 	}
 
-	//we know all threads have exited, so it's safe to delete objects.
+	LockGuard lg{mavlink_module_mutex};
+
+	// we know all threads have exited, so it's safe to delete objects.
 	for (Mavlink *inst_to_del : mavlink_module_instances) {
 		delete inst_to_del;
 	}
@@ -370,7 +385,6 @@ Mavlink::destroy_all_instances()
 	delete _event_buffer;
 	_event_buffer = nullptr;
 
-	printf("\n");
 	PX4_INFO("all instances stopped");
 	return OK;
 }
@@ -1483,15 +1497,16 @@ Mavlink::configure_streams_to_default(const char *configure_single_stream)
 		configure_stream_local("ESC_STATUS", 1.0f);
 		configure_stream_local("ESTIMATOR_STATUS", 0.5f);
 		configure_stream_local("EXTENDED_SYS_STATE", 1.0f);
-		configure_stream_local("GLOBAL_POSITION_INT", 5.0f);
 		configure_stream_local("GIMBAL_DEVICE_ATTITUDE_STATUS", 1.0f);
-		configure_stream_local("GIMBAL_MANAGER_STATUS", 0.5f);
 		configure_stream_local("GIMBAL_DEVICE_SET_ATTITUDE", 5.0f);
+		configure_stream_local("GIMBAL_MANAGER_STATUS", 0.5f);
+		configure_stream_local("GLOBAL_POSITION_INT", 5.0f);
 		configure_stream_local("GPS2_RAW", 1.0f);
 		configure_stream_local("GPS_GLOBAL_ORIGIN", 0.1f);
 		configure_stream_local("GPS_RAW_INT", 1.0f);
 		configure_stream_local("GPS_STATUS", 1.0f);
 		configure_stream_local("HOME_POSITION", 0.5f);
+		configure_stream_local("HYGROMETER_SENSOR", 0.1f);
 		configure_stream_local("LOCAL_POSITION_NED", 1.0f);
 		configure_stream_local("NAV_CONTROLLER_OUTPUT", 1.0f);
 		configure_stream_local("OBSTACLE_DISTANCE", 1.0f);
@@ -1544,14 +1559,15 @@ Mavlink::configure_streams_to_default(const char *configure_single_stream)
 		configure_stream_local("ESTIMATOR_STATUS", 1.0f);
 		configure_stream_local("EXTENDED_SYS_STATE", 5.0f);
 		configure_stream_local("GIMBAL_DEVICE_ATTITUDE_STATUS", 1.0f);
-		configure_stream_local("GIMBAL_MANAGER_STATUS", 0.5f);
 		configure_stream_local("GIMBAL_DEVICE_SET_ATTITUDE", 5.0f);
+		configure_stream_local("GIMBAL_MANAGER_STATUS", 0.5f);
 		configure_stream_local("GLOBAL_POSITION_INT", 50.0f);
 		configure_stream_local("GPS2_RAW", unlimited_rate);
 		configure_stream_local("GPS_GLOBAL_ORIGIN", 1.0f);
 		configure_stream_local("GPS_RAW_INT", unlimited_rate);
 		configure_stream_local("GPS_STATUS", 1.0f);
 		configure_stream_local("HOME_POSITION", 0.5f);
+		configure_stream_local("HYGROMETER_SENSOR", 1.0f);
 		configure_stream_local("NAV_CONTROLLER_OUTPUT", 10.0f);
 		configure_stream_local("OPTICAL_FLOW_RAD", 10.0f);
 		configure_stream_local("ORBIT_EXECUTION_STATUS", 5.0f);
@@ -1613,6 +1629,7 @@ Mavlink::configure_streams_to_default(const char *configure_single_stream)
 		configure_stream_local("GPS_GLOBAL_ORIGIN", 1.0f);
 		configure_stream_local("GPS_RAW_INT", 1.0f);
 		configure_stream_local("HOME_POSITION", 0.5f);
+		configure_stream_local("HYGROMETER_SENSOR", 1.0f);
 		configure_stream_local("NAV_CONTROLLER_OUTPUT", 1.5f);
 		configure_stream_local("OPTICAL_FLOW_RAD", 1.0f);
 		configure_stream_local("ORBIT_EXECUTION_STATUS", 5.0f);
@@ -1648,6 +1665,7 @@ Mavlink::configure_streams_to_default(const char *configure_single_stream)
 		configure_stream_local("GLOBAL_POSITION_INT", 10.0f);
 		configure_stream_local("GPS_RAW_INT", 1.0f);
 		configure_stream_local("HOME_POSITION", 0.5f);
+		configure_stream_local("HYGROMETER_SENSOR", 0.1f);
 		configure_stream_local("RC_CHANNELS", 5.0f);
 		configure_stream_local("SERVO_OUTPUT_RAW_0", 1.0f);
 		configure_stream_local("SYS_STATUS", 5.0f);
@@ -1694,6 +1712,7 @@ Mavlink::configure_streams_to_default(const char *configure_single_stream)
 		configure_stream_local("GPS_STATUS", 1.0f);
 		configure_stream_local("HIGHRES_IMU", 50.0f);
 		configure_stream_local("HOME_POSITION", 0.5f);
+		configure_stream_local("HYGROMETER_SENSOR", 1.0f);
 		configure_stream_local("MAG_CAL_REPORT", 1.0f);
 		configure_stream_local("MANUAL_CONTROL", 5.0f);
 		configure_stream_local("NAV_CONTROLLER_OUTPUT", 10.0f);
@@ -2057,7 +2076,7 @@ Mavlink::task_main(int argc, char *argv[])
 	/* USB serial is indicated by /dev/ttyACMx */
 	if (strncmp(_device_name, "/dev/ttyACM", 11) == 0) {
 		if (_datarate == 0) {
-			_datarate = 800000;
+			_datarate = 100000;
 		}
 
 		/* USB has no baudrate, but use a magic number for 'fast' */
@@ -2069,7 +2088,6 @@ Mavlink::task_main(int argc, char *argv[])
 
 		_ftp_on = true;
 		_is_usb_uart = true;
-		_flow_control_mode = FLOW_CONTROL_OFF;
 
 		set_telemetry_status_type(telemetry_status_s::LINK_TYPE_USB);
 	}
@@ -3021,13 +3039,24 @@ Mavlink::stop_command(int argc, char *argv[])
 		if (inst != nullptr) {
 			/* set flag to stop thread and wait for all threads to finish */
 			if (inst->running() && !inst->should_exit()) {
-				inst->request_stop();
+				int iterations = 0;
+
+				while ((iterations < 1000) && inst->running()) {
+					inst->request_stop();
+					iterations++;
+					px4_usleep(1000);
+				}
+
+				if (inst->running()) {
+					PX4_ERR("unable to stop instance %d", inst->get_instance_id());
+					return PX4_ERROR;
+				}
 
 				LockGuard lg{mavlink_module_mutex};
 
 				for (int mavlink_instance = 0; mavlink_instance < MAVLINK_COMM_NUM_BUFFERS; mavlink_instance++) {
 					if (mavlink_module_instances[mavlink_instance] == inst) {
-						delete mavlink_module_instances[mavlink_instance];
+						delete inst;
 						mavlink_module_instances[mavlink_instance] = nullptr;
 						return PX4_OK;
 					}

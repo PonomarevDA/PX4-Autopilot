@@ -187,8 +187,8 @@ bool MulticopterLandDetector::_get_ground_contact_state()
 		_horizontal_movement = false; // not known
 	}
 
-	if (lpos_available && _vehicle_local_position.dist_bottom_valid) {
-		_below_gnd_effect_hgt = _vehicle_local_position.dist_bottom < _get_gnd_effect_altitude();
+	if (lpos_available && _vehicle_local_position.dist_bottom_valid && _param_lndmc_alt_gnd_effect.get() > 0) {
+		_below_gnd_effect_hgt = _vehicle_local_position.dist_bottom < _param_lndmc_alt_gnd_effect.get();
 
 	} else {
 		_below_gnd_effect_hgt = false;
@@ -285,10 +285,9 @@ bool MulticopterLandDetector::_get_maybe_landed_state()
 	}
 
 	// Next look if all rotation angles are not moving.
-	vehicle_angular_velocity_s vehicle_angular_velocity{};
-	_vehicle_angular_velocity_sub.copy(&vehicle_angular_velocity);
-	const Vector2f angular_velocity{vehicle_angular_velocity.xyz[0], vehicle_angular_velocity.xyz[1]};
 	const float max_rotation_scaled = math::radians(_param_lndmc_rot_max.get()) * landThresholdFactor;
+
+	matrix::Vector2f angular_velocity{_angular_velocity(0), _angular_velocity(1)};
 
 	if (angular_velocity.norm() > max_rotation_scaled) {
 		return false;
@@ -321,26 +320,6 @@ bool MulticopterLandDetector::_get_landed_state()
 	// if we have maybe_landed, the mc_pos_control goes into idle (thrust_sp = 0.0)
 	// therefore check if all other condition of the landed state remain true
 	return _maybe_landed_hysteresis.get_state();
-}
-
-float MulticopterLandDetector::_get_max_altitude()
-{
-	if (_param_lndmc_alt_max.get() < 0.0f) {
-		return INFINITY;
-
-	} else {
-		return _param_lndmc_alt_max.get();
-	}
-}
-
-float MulticopterLandDetector::_get_gnd_effect_altitude()
-{
-	if (_param_lndmc_alt_gnd_effect.get() < 0.0f) {
-		return INFINITY;
-
-	} else {
-		return _param_lndmc_alt_gnd_effect.get();
-	}
 }
 
 bool MulticopterLandDetector::_get_ground_effect_state()
