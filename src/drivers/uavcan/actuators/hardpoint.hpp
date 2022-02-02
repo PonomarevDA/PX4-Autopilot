@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (C) 2014 PX4 Development Team. All rights reserved.
+ *   Copyright (C) 2014-2022 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,7 +42,8 @@
 #include <uavcan/uavcan.hpp>
 #include <uavcan/equipment/hardpoint/Command.hpp>
 #include <uavcan/equipment/hardpoint/Status.hpp>
-#include <perf/perf_counter.h>
+#include <uORB/Subscription.hpp>
+#include <uORB/topics/vehicle_command.h>
 
 /**
  * @brief The UavcanHardpointController class
@@ -59,17 +60,12 @@ public:
 	*/
 	int init();
 
-
-	/*
-	 * set command
-	 */
-	void set_command(uint8_t hardpoint_id, uint16_t command);
-
 private:
 	/*
 	 * Max update rate to avoid exessive bus traffic
 	 */
-	static constexpr unsigned			MAX_RATE_HZ = 1;	///< XXX make this configurable
+	static constexpr unsigned			MAX_UPDATE_RATE_HZ = 10;
+	static constexpr unsigned			PUBLISH_RATE_HZ = 1;
 
 	uavcan::equipment::hardpoint::Command		_cmd;
 
@@ -86,4 +82,7 @@ private:
 	uavcan::Publisher<uavcan::equipment::hardpoint::Command>	_uavcan_pub_raw_cmd;
 	uavcan::TimerEventForwarder<TimerCbBinder>			_timer;
 
+	uORB::Subscription _vehicle_command_sub{ORB_ID(vehicle_command)};
+
+	hrt_abstime _next_publish_time = 0;
 };

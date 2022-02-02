@@ -126,6 +126,7 @@ MissionBlock::is_mission_item_reached()
 		}
 
 	case NAV_CMD_DO_CHANGE_SPEED:
+	case NAV_CMD_DO_GRIPPER:
 	case NAV_CMD_DO_SET_HOME:
 		return true;
 
