@@ -53,6 +53,7 @@ px4_add_romfs_files(
 	hexa_cox.main.mix
 	hexa_+.main.mix
 	hexa_x.main.mix
+	inno_vtol_AAERT.main.mix
 	IO_pass.main.mix
 	mount.aux.mix
 	mount_legs.aux.mix
