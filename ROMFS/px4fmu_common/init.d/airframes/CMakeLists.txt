@@ -129,6 +129,7 @@ px4_add_romfs_files(
 	13014_vtol_babyshark
 	13030_generic_vtol_quad_tiltrotor
 	13050_generic_vtol_octo
+	13070_innopolis_vtol
 	13200_generic_vtol_tailsitter
 
 	# [14000, 14999] Tri Y
