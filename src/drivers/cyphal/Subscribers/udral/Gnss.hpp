@@ -42,7 +42,9 @@
 #pragma once
 
 // UDRAL Specification Messages
-#include <reg/udral/physics/kinematics/geodetic/Point_0_1.h>
+#include <reg/udral/physics/kinematics/geodetic/PointStateVarTs_0_1.h>
+#include <uavcan/primitive/scalar/Integer16_1_0.h>
+#include <uORB/topics/sensor_gps.h>
 
 #include "../DynamicPortSubscriber.hpp"
 
@@ -50,49 +52,153 @@ class UavcanGnssSubscriber : public UavcanDynamicPortSubscriber
 {
 public:
 	UavcanGnssSubscriber(CanardHandle &handle, UavcanParamManager &pmgr, uint8_t instance = 0) :
-		UavcanDynamicPortSubscriber(handle, pmgr, "udral.", "gps", instance) { };
+		UavcanDynamicPortSubscriber(handle, pmgr, "udral.", "gps", instance)
+	{
+		_subj_sub.next = &_sats_sub;
+
+		_sats_sub._subject_name = "gps.sats";
+		_sats_sub._canard_sub.port_id = CANARD_PORT_ID_UNSET;
+		_sats_sub._canard_sub.user_reference = this;
+		_sats_sub.next = &_status_sub;
+
+		_status_sub._subject_name = "gps.status";
+		_status_sub._canard_sub.port_id = CANARD_PORT_ID_UNSET;
+		_status_sub._canard_sub.user_reference = this;
+		_status_sub.next = &_pdop_sub;
+
+		_pdop_sub._subject_name = "gps.pdop";
+		_pdop_sub._canard_sub.port_id = CANARD_PORT_ID_UNSET;
+		_pdop_sub._canard_sub.user_reference = this;
+		_pdop_sub.next = nullptr;
+	};
 
 	void subscribe() override
 	{
-		// Subscribe to messages reg.drone.physics.kinematics.geodetic.Point.0.1
-		_canard_handle.RxSubscribe(CanardTransferKindMessage,
-					   _subj_sub._canard_sub.port_id,
-					   reg_udral_physics_kinematics_geodetic_Point_0_1_EXTENT_BYTES_,
-					   CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC,
-					   &_subj_sub._canard_sub);
+		if (_subj_sub._canard_sub.port_id != CANARD_PORT_ID_UNSET) {
+			_canard_handle.RxSubscribe(CanardTransferKindMessage,
+						   _subj_sub._canard_sub.port_id,
+						   reg_udral_physics_kinematics_geodetic_PointStateVarTs_0_1_EXTENT_BYTES_,
+						   CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC,
+						   &_subj_sub._canard_sub);
+		}
 
-		/** TODO: Add additional GPS-data messages: (reg.drone.service.gnss._.0.1.uavcan):
-		 * # A compliant implementation of this service should publish the following subjects:
-		 * #
-		 * #   PUBLISHED SUBJECT NAME      SUBJECT TYPE                                            TYP. RATE [Hz]
-		 * #   point_kinematics            reg.drone.physics.kinematics.geodetic.PointStateVarTs   1...100
-		 * #   time                        reg.drone.service.gnss.Time                             1...10
-		 * #   heartbeat                   reg.drone.service.gnss.Heartbeat                        ~1
-		 * #   sensor_status               reg.drone.service.sensor.Status                         ~1
-		 *
-		 * Not mentioned, but should also be included: Dilution of Precision
-		 *   (reg.drone.service.gnss.DilutionOfPrecision.0.1.uavcan)
-		 * For PX4, only the PointStateVarTs, DilutionOfPrecision, and perhaps Time would be needed
-		 * to publish 'sensor_gps'
-		 */
+		if (_sats_sub._canard_sub.port_id != CANARD_PORT_ID_UNSET) {
+			_canard_handle.RxSubscribe(CanardTransferKindMessage,
+						   _sats_sub._canard_sub.port_id,
+						   uavcan_primitive_scalar_Integer16_1_0_EXTENT_BYTES_,
+						   CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC,
+						   &_sats_sub._canard_sub);
+		}
+
+		if (_status_sub._canard_sub.port_id != CANARD_PORT_ID_UNSET) {
+			_canard_handle.RxSubscribe(CanardTransferKindMessage,
+						   _status_sub._canard_sub.port_id,
+						   uavcan_primitive_scalar_Integer16_1_0_EXTENT_BYTES_,
+						   CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC,
+						   &_status_sub._canard_sub);
+		}
+
+		if (_pdop_sub._canard_sub.port_id != CANARD_PORT_ID_UNSET) {
+			_canard_handle.RxSubscribe(CanardTransferKindMessage,
+						   _pdop_sub._canard_sub.port_id,
+						   uavcan_primitive_scalar_Integer16_1_0_EXTENT_BYTES_,
+						   CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC,
+						   &_pdop_sub._canard_sub);
+		}
 	};
 
 	void callback(const CanardRxTransfer &receive) override
 	{
-		// Test with Yakut:
-		// export YAKUT_TRANSPORT="pyuavcan.transport.can.CANTransport(pyuavcan.transport.can.media.slcan.SLCANMedia('/dev/serial/by-id/usb-Zubax_Robotics_Zubax_Babel_23002B000E514E413431302000000000-if00', 8, 115200), 42)"
-		// yakut pub 1500.reg.drone.physics.kinematics.geodetic.Point.0.1 '{latitude: 1.234, longitude: 2.34, altitude: {meter: 0.5}}'
-		PX4_INFO("GpsCallback");
+		if (receive.metadata.port_id == _subj_sub._canard_sub.port_id) {
+			parsePoint(receive);
+			publishUorb();
 
-		reg_udral_physics_kinematics_geodetic_Point_0_1 geo {};
-		size_t geo_size_in_bits = receive.payload_size;
-		reg_udral_physics_kinematics_geodetic_Point_0_1_deserialize_(&geo, (const uint8_t *)receive.payload, &geo_size_in_bits);
+		} else if (receive.metadata.port_id == _sats_sub._canard_sub.port_id) {
+			parseSats(receive);
 
-		double lat = geo.latitude;
-		double lon = geo.longitude;
-		double alt = geo.altitude.meter;
-		PX4_INFO("Latitude: %f, Longitude: %f, Altitude: %f", lat, lon, alt);
-		/// do something with the data
+		} else if (receive.metadata.port_id == _status_sub._canard_sub.port_id) {
+			parseStatus(receive);
+
+		} else if (receive.metadata.port_id == _pdop_sub._canard_sub.port_id) {
+			parsePdop(receive);
+		}
 	};
 
+	void parsePoint(const CanardRxTransfer &receive)
+	{
+		reg_udral_physics_kinematics_geodetic_PointStateVarTs_0_1 geo {};
+		size_t geo_size_in_bytes = receive.payload_size;
+
+		if (0 != reg_udral_physics_kinematics_geodetic_PointStateVarTs_0_1_deserialize_(&geo,
+				(const uint8_t *)receive.payload,
+				&geo_size_in_bytes)) {
+			return;
+		}
+
+		_report.timestamp = hrt_absolute_time();
+		_report.latitude_deg = M_RAD_TO_DEG * geo.value.position.value.latitude;
+		_report.longitude_deg = M_RAD_TO_DEG * geo.value.position.value.longitude;
+		_report.altitude_msl_m = geo.value.position.value.altitude.meter;
+		_report.altitude_ellipsoid_m = _report.altitude_msl_m;
+
+		_report.vel_n_m_s = geo.value.velocity.value.meter_per_second[0];
+		_report.vel_e_m_s = geo.value.velocity.value.meter_per_second[1];
+		_report.vel_d_m_s = geo.value.velocity.value.meter_per_second[2];
+		_report.vel_m_s = sqrtf(_report.vel_n_m_s * _report.vel_n_m_s +
+					_report.vel_e_m_s * _report.vel_e_m_s +
+					_report.vel_d_m_s * _report.vel_d_m_s);
+		_report.cog_rad = atan2f(_report.vel_e_m_s, _report.vel_n_m_s);
+		_report.vel_ned_valid = true;
+	}
+
+	void parseSats(const CanardRxTransfer &receive)
+	{
+		_report.satellites_used = parseInteger16(receive);
+	}
+
+	void parseStatus(const CanardRxTransfer &receive)
+	{
+		_report.fix_type = parseInteger16(receive);
+	}
+
+	void parsePdop(const CanardRxTransfer &receive)
+	{
+		_report.hdop = parseInteger16(receive);
+		_report.vdop = _report.hdop;
+	}
+
+	void publishUorb()
+	{
+		if (_orb_advert == nullptr) {
+			_orb_advert = orb_advertise_multi(ORB_TOPIC, &_report, &_instance);
+
+		} else {
+			(void)orb_publish(ORB_TOPIC, _orb_advert, &_report);
+		}
+	}
+
+private:
+	int16_t parseInteger16(const CanardRxTransfer &receive)
+	{
+		uavcan_primitive_scalar_Integer16_1_0 msg;
+		size_t size_in_bytes = receive.payload_size;
+
+		if (0 != uavcan_primitive_scalar_Integer16_1_0_deserialize_(&msg,
+				(const uint8_t *)receive.payload,
+				&size_in_bytes)) {
+			return 0;
+		}
+
+		return msg.value;
+	}
+
+	const orb_id_t ORB_TOPIC = ORB_ID(sensor_gps);
+	orb_advert_t _orb_advert{nullptr};
+
+	int _instance = 0;
+	sensor_gps_s _report{};
+
+	SubjectSubscription _sats_sub;
+	SubjectSubscription _status_sub;
+	SubjectSubscription _pdop_sub;
 };
