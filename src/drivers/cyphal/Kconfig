@@ -80,6 +80,10 @@ if DRIVERS_CYPHAL
             bool "GNSS Subscriber 1"
             default n
 
+        config CYPHAL_BAROMETER_SUBSCRIBER_0
+            bool "Baro Subscriber 0"
+            default n
+
         config CYPHAL_BMS_SUBSCRIBER
             bool "BMS Subscriber"
             default n
