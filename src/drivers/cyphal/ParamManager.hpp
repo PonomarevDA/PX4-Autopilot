@@ -116,11 +116,13 @@ public:
 private:
 
 
-	const UavcanParamBinder _uavcan_params[16] {
+	const UavcanParamBinder _uavcan_params[18] {
 		{"uavcan.pub.udral.esc.0.id",                	"UCAN1_ESC_PUB",		px4_param_to_uavcan_port_id, uavcan_port_id_to_px4_param},
 		{"uavcan.pub.udral.servo.0.id",              	"UCAN1_SERVO_PUB",		px4_param_to_uavcan_port_id, uavcan_port_id_to_px4_param},
 		{"uavcan.pub.udral.gps.0.id",                	"UCAN1_GPS_PUB",		px4_param_to_uavcan_port_id, uavcan_port_id_to_px4_param},
 		{"uavcan.pub.udral.actuator_outputs.0.id",   	"UCAN1_ACTR_PUB",		px4_param_to_uavcan_port_id, uavcan_port_id_to_px4_param},
+		{"uavcan.sub.udral.baro.pressure.0.id",		"UCAN1_BAROP0_SUB",		px4_param_to_uavcan_port_id, uavcan_port_id_to_px4_param},
+		{"uavcan.sub.udral.baro.temperature.0.id",	"UCAN1_BAROT0_SUB",		px4_param_to_uavcan_port_id, uavcan_port_id_to_px4_param},
 		{"uavcan.sub.udral.esc.0.id",                	"UCAN1_ESC0_SUB",		px4_param_to_uavcan_port_id, uavcan_port_id_to_px4_param},
 		{"uavcan.sub.udral.gps.0.id",                	"UCAN1_GPS0_SUB",		px4_param_to_uavcan_port_id, uavcan_port_id_to_px4_param},
 		{"uavcan.sub.udral.gps.sats.0.id",		"UCAN1_GPSSA0_SUB",		px4_param_to_uavcan_port_id, uavcan_port_id_to_px4_param},
