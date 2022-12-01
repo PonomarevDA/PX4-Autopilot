@@ -88,6 +88,10 @@ if DRIVERS_CYPHAL
             bool "Mag Subscriber 0"
             default n
 
+        config CYPHAL_RANGEFINDER_SUBSCRIBER_0
+            bool "Rangefinder Subscriber 0"
+            default n
+
         config CYPHAL_BMS_SUBSCRIBER
             bool "BMS Subscriber"
             default n
