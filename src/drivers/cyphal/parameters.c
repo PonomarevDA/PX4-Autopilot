@@ -141,6 +141,15 @@ PARAM_DEFINE_INT32(UCAN1_BAROP0_SUB, -1);
 PARAM_DEFINE_INT32(UCAN1_BAROT0_SUB, -1);
 
 /**
+ * Magnetometer 0 subscription port ID.
+ *
+ * @min -1
+ * @max 6143
+ * @group Cyphal
+ */
+PARAM_DEFINE_INT32(UCAN1_MAG0_SUB, -1);
+
+/**
  * UDRAL battery energy source subscription port ID.
  *
  * @min -1
