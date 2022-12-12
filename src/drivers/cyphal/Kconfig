@@ -68,6 +68,10 @@ if DRIVERS_CYPHAL
 
     menu "Subscriber support"
 
+        config CYPHAL_ACCELEROMETER_SUBSCRIBER_0
+            bool "Accelerometer Subscriber 0"
+            default n
+
         config CYPHAL_ESC_SUBSCRIBER
             bool "ESC Subscriber"
             default n

@@ -69,6 +69,15 @@ PARAM_DEFINE_INT32(CYPHAL_BAUD, 1000000);
 /* Subscription port ID, -1 will be treated as unset */
 
 /**
+ * Udral Accelerometer 0 subscription port ID.
+ *
+ * @min -1
+ * @max 6143
+ * @group Cyphal
+ */
+PARAM_DEFINE_INT32(UCAN1_ACCEL_SUB, -1);
+
+/**
  * ESC 0 subscription port ID.
  *
  * @min -1
