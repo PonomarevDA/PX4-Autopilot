@@ -65,6 +65,10 @@
 #define CONFIG_CYPHAL_BAROMETER_SUBSCRIBER_0 0
 #endif
 
+#ifndef CONFIG_CYPHAL_GYROSCOPE_SUBSCRIBER_0
+#define CONFIG_CYPHAL_GYROSCOPE_SUBSCRIBER_0 0
+#endif
+
 #ifndef CONFIG_CYPHAL_MAGNETOMETER_SUBSCRIBER_0
 #define CONFIG_CYPHAL_MAGNETOMETER_SUBSCRIBER_0 0
 #endif
@@ -89,6 +93,7 @@
 	CONFIG_CYPHAL_GNSS_SUBSCRIBER_1 + \
 	CONFIG_CYPHAL_ACCELEROMETER_SUBSCRIBER_0 + \
 	CONFIG_CYPHAL_BAROMETER_SUBSCRIBER_0 + \
+	CONFIG_CYPHAL_GYROSCOPE_SUBSCRIBER_0 + \
 	CONFIG_CYPHAL_MAGNETOMETER_SUBSCRIBER_0 + \
 	CONFIG_CYPHAL_RANGEFINDER_SUBSCRIBER_0 + \
 	CONFIG_CYPHAL_BMS_SUBSCRIBER + \
@@ -109,6 +114,7 @@
 #include "Subscribers/udral/Accelerometer.hpp"
 #include "Subscribers/udral/Battery.hpp"
 #include "Subscribers/udral/Barometer.hpp"
+#include "Subscribers/udral/Gyroscope.hpp"
 #include "Subscribers/udral/Magnetometer.hpp"
 #include "Subscribers/udral/Esc.hpp"
 #include "Subscribers/udral/Gnss.hpp"
@@ -265,6 +271,16 @@ private:
 				return new UavcanBarometerSubscriber(handle, pmgr, 0);
 			},
 			"udral.baro.pressure",
+			0
+		},
+#endif
+#if CONFIG_CYPHAL_GYROSCOPE_SUBSCRIBER_0
+		{
+			[](CanardHandle & handle, UavcanParamManager & pmgr) -> UavcanDynamicPortSubscriber *
+			{
+				return new UavcanGyroscopeSubscriber(handle, pmgr, 0);
+			},
+			"udral.gyro",
 			0
 		},
 #endif
