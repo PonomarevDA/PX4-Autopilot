@@ -57,6 +57,10 @@
 #define CONFIG_CYPHAL_GNSS_SUBSCRIBER_1 0
 #endif
 
+#ifndef CONFIG_CYPHAL_ACCELEROMETER_SUBSCRIBER_0
+#define CONFIG_CYPHAL_ACCELEROMETER_SUBSCRIBER_0 0
+#endif
+
 #ifndef CONFIG_CYPHAL_BAROMETER_SUBSCRIBER_0
 #define CONFIG_CYPHAL_BAROMETER_SUBSCRIBER_0 0
 #endif
@@ -83,6 +87,7 @@
 	CONFIG_CYPHAL_GNSS_SUBSCRIBER_0 + \
 	8 * CONFIG_CYPHAL_ESC_CONTROLLER + \
 	CONFIG_CYPHAL_GNSS_SUBSCRIBER_1 + \
+	CONFIG_CYPHAL_ACCELEROMETER_SUBSCRIBER_0 + \
 	CONFIG_CYPHAL_BAROMETER_SUBSCRIBER_0 + \
 	CONFIG_CYPHAL_MAGNETOMETER_SUBSCRIBER_0 + \
 	CONFIG_CYPHAL_RANGEFINDER_SUBSCRIBER_0 + \
@@ -101,6 +106,7 @@
 #include "ServiceClients/List.hpp"
 #include "Subscribers/BaseSubscriber.hpp"
 #include "Subscribers/Heartbeat.hpp"
+#include "Subscribers/udral/Accelerometer.hpp"
 #include "Subscribers/udral/Battery.hpp"
 #include "Subscribers/udral/Barometer.hpp"
 #include "Subscribers/udral/Magnetometer.hpp"
@@ -146,6 +152,16 @@ private:
 	UavcanListResponse  _list_rsp {_canard_handle, _param_manager};
 
 	const UavcanDynSubBinder _uavcan_subs[UAVCAN_SUB_COUNT] {
+#if CONFIG_CYPHAL_ACCELEROMETER_SUBSCRIBER_0
+		{
+			[](CanardHandle & handle, UavcanParamManager & pmgr) -> UavcanDynamicPortSubscriber *
+			{
+				return new UavcanAccelerometerSubscriber(handle, pmgr, 0);
+			},
+			"udral.accel",
+			0
+		},
+#endif
 #if CONFIG_CYPHAL_ESC_SUBSCRIBER
 		{
 			[](CanardHandle & handle, UavcanParamManager & pmgr) -> UavcanDynamicPortSubscriber *
