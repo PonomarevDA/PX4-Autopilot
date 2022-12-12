@@ -132,6 +132,15 @@ PARAM_DEFINE_INT32(UCAN1_GPSPD0_SUB, -1);
 PARAM_DEFINE_INT32(UCAN1_GPS1_SUB, -1);
 
 /**
+ * Udral Gyroscope 0 subscription port ID.
+ *
+ * @min -1
+ * @max 6143
+ * @group Cyphal
+ */
+PARAM_DEFINE_INT32(UCAN1_GYRO_SUB, -1);
+
+/**
  * Barometer 0 pressure subscription port ID.
  *
  * @min -1
