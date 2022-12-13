@@ -60,14 +60,14 @@
 
 // UDRAL Specification Messages
 using std::isfinite;
-#include <reg/udral/service/actuator/common/sp/Vector31_0_1.h>
+#include <reg/udral/service/actuator/common/sp/Vector4_0_1.h>
 #include <reg/udral/service/common/Readiness_0_1.h>
 
 /// TODO: Allow derived class of Subscription at same time, to handle ESC Feedback/Status
 class UavcanEscController : public UavcanPublisher
 {
 public:
-	static constexpr int MAX_ACTUATORS = MixingOutput::MAX_ACTUATORS;
+	static constexpr int MAX_ACTUATORS = 4;
 
 	UavcanEscController(CanardHandle &handle, UavcanParamManager &pmgr) :
 		UavcanPublisher(handle, pmgr, "udral.", "esc") { };
@@ -100,8 +100,8 @@ public:
 	void update_outputs(bool stop_motors, uint16_t outputs[MAX_ACTUATORS], unsigned num_outputs)
 	{
 		if (_port_id > 0) {
-			reg_udral_service_actuator_common_sp_Vector31_0_1 msg_sp {0};
-			size_t payload_size = reg_udral_service_actuator_common_sp_Vector31_0_1_SERIALIZATION_BUFFER_SIZE_BYTES_;
+			reg_udral_service_actuator_common_sp_Vector4_0_1 msg_sp {0};
+			size_t payload_size = reg_udral_service_actuator_common_sp_Vector4_0_1_SERIALIZATION_BUFFER_SIZE_BYTES_;
 
 			for (uint8_t i = 0; i < MAX_ACTUATORS; i++) {
 				if (i < num_outputs) {
@@ -113,7 +113,7 @@ public:
 				}
 			}
 
-			uint8_t esc_sp_payload_buffer[reg_udral_service_actuator_common_sp_Vector31_0_1_SERIALIZATION_BUFFER_SIZE_BYTES_];
+			uint8_t esc_sp_payload_buffer[reg_udral_service_actuator_common_sp_Vector4_0_1_SERIALIZATION_BUFFER_SIZE_BYTES_];
 
 			const CanardTransferMetadata transfer_metadata = {
 				.priority       = CanardPriorityNominal,
@@ -123,7 +123,7 @@ public:
 				.transfer_id    = _transfer_id,
 			};
 
-			int result = reg_udral_service_actuator_common_sp_Vector31_0_1_serialize_(&msg_sp, esc_sp_payload_buffer,
+			int result = reg_udral_service_actuator_common_sp_Vector4_0_1_serialize_(&msg_sp, esc_sp_payload_buffer,
 					&payload_size);
 
 			if (result == 0) {
