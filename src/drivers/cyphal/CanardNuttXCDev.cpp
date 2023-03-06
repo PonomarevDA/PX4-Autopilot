@@ -42,10 +42,12 @@
 #include "stm32_can.h"
 
 #include <px4_platform_common/log.h>
-
+#include <systemlib/mavlink_log.h>
+static orb_advert_t mavlink_log_pub {nullptr};
 int CanardNuttXCDev::init()
 {
 	struct can_dev_s *can = stm32_caninitialize(1);
+	mavlink_log_critical(&mavlink_log_pub, "CanardSocketCAN: init");
 
 	if (can == nullptr) {
 		PX4_ERR("Failed to get CAN interface");

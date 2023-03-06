@@ -53,7 +53,10 @@
 # endif // CONFIG_CAN
 #endif // NuttX
 
-
+#include <stdlib.h>
+#include <systemlib/mavlink_log.h>
+static orb_advert_t mavlink_log_pub {nullptr};
+uint8_t CanardHandle::_cyphal_heap[HeapSize] __attribute__((aligned (O1HEAP_ALIGNMENT)));
 O1HeapInstance *cyphal_allocator{nullptr};
 
 static void *memAllocate(CanardInstance *const ins, const size_t amount) { return o1heapAllocate(cyphal_allocator, amount); }
@@ -62,7 +65,7 @@ static void memFree(CanardInstance *const ins, void *const pointer) { o1heapFree
 
 CanardHandle::CanardHandle(uint32_t node_id, const size_t capacity, const size_t mtu_bytes)
 {
-	_cyphal_heap = memalign(O1HEAP_ALIGNMENT, HeapSize);
+	// _cyphal_heap = memalign(O1HEAP_ALIGNMENT, HeapSize);
 	cyphal_allocator = o1heapInit(_cyphal_heap, HeapSize, nullptr, nullptr);
 
 	if (cyphal_allocator == nullptr) {
@@ -83,6 +86,9 @@ CanardHandle::CanardHandle(uint32_t node_id, const size_t capacity, const size_t
 # endif // CONFIG_CAN
 #endif // NuttX
 
+#ifdef CONFIG_PLATFORM_POSIX
+	mavlink_log_critical(&mavlink_log_pub, "CONFIG_PLATFORM_POSIX");
+#endif
 }
 
 CanardHandle::~CanardHandle()
@@ -91,8 +97,8 @@ CanardHandle::~CanardHandle()
 	delete _can_interface;
 	_can_interface = nullptr;
 
-	delete static_cast<uint8_t *>(_cyphal_heap);
-	_cyphal_heap = nullptr;
+	// delete static_cast<uint8_t *>(_cyphal_heap);
+	// _cyphal_heap = nullptr;
 
 }
 

@@ -36,7 +36,8 @@
 #include <drivers/drv_sensor.h>
 #include <lib/drivers/device/Device.hpp>
 #include <lib/geo/geo.h>
-
+#include <systemlib/mavlink_log.h>
+// static orb_advert_t mavlink_log_pub {nullptr};
 using namespace matrix;
 
 SensorGpsSim::SensorGpsSim() :
@@ -176,6 +177,7 @@ void SensorGpsSim::Run()
 
 		sensor_gps.timestamp = hrt_absolute_time();
 		_sensor_gps_pub.publish(sensor_gps);
+		// mavlink_log_critical(&mavlink_log_pub, "GPS: publish");
 	}
 
 	perf_end(_loop_perf);

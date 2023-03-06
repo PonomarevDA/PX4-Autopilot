@@ -47,10 +47,11 @@ uint64_t getMonotonicTimestampUSec(void)
 
 	return ts.tv_sec * 1000000ULL + ts.tv_nsec / 1000ULL;
 }
-
+#include <systemlib/mavlink_log.h>
+// static orb_advert_t mavlink_log_pub {nullptr};
 int CanardSocketCAN::init()
 {
-	const char *const can_iface_name = "can0";
+	const char *const can_iface_name = "slcan0";
 
 	struct sockaddr_can addr;
 	struct ifreq ifr;
@@ -59,6 +60,7 @@ int CanardSocketCAN::init()
 	bool can_fd = 0;
 
 	_can_fd = can_fd;
+	// mavlink_log_critical(&mavlink_log_pub, "CanardSocketCAN: init");
 
 	/* open socket */
 	if ((_fd = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {

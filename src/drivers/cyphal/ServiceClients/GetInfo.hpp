@@ -94,9 +94,9 @@ public:
 
 		node_info.software_vcs_revision_id = px4_firmware_version_binary();
 
-		px4_guid_t px4_guid;
-		board_get_px4_guid(px4_guid);
-		memcpy(node_info.unique_id, px4_guid, sizeof(node_info.unique_id));
+		// px4_guid_t px4_guid;
+		// board_get_px4_guid(px4_guid);
+		// memcpy(node_info.unique_id, px4_guid, sizeof(node_info.unique_id));
 
 		//TODO proper name
 		strncpy((char *)node_info.name.elements,

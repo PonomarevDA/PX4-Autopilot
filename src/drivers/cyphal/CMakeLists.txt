@@ -64,6 +64,11 @@ if(${PX4_PLATFORM} MATCHES "nuttx")
 			CanardNuttXCDev.hpp
 		)
 	endif()
+elseif(${CONFIG_PLATFORM_POSIX})
+	list(APPEND SRCS
+		CanardSocketCANLinux.cpp
+		CanardSocketCANLinux.hpp
+	)
 endif()
 
 if(CONFIG_CYPHAL_NODE_MANAGER)

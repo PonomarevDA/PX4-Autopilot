@@ -50,7 +50,7 @@ void NodeClient::callback(const CanardRxTransfer &receive)
 
 		int32_t allocated = CANARD_NODE_ID_UNSET;
 		px4_guid_t px4_guid;
-		board_get_px4_guid(px4_guid);
+		// board_get_px4_guid(px4_guid);
 
 		if (_canard_handle.mtu() == CANARD_MTU_CAN_FD) {
 			uavcan_pnp_NodeIDAllocationData_2_0 msg;
@@ -114,7 +114,7 @@ void NodeClient::update()
 			size_t payload_size = PNP2_PAYLOAD_SIZE;
 
 			px4_guid_t px4_guid;
-			board_get_px4_guid(px4_guid);
+			// board_get_px4_guid(px4_guid);
 			memcpy(node_id_alloc_msg.unique_id, px4_guid, sizeof(node_id_alloc_msg.unique_id));
 			//node_id_alloc_msg.node_id.value = preffered_node_id; //FIXME preffered ID PX4 Param
 
@@ -146,7 +146,7 @@ void NodeClient::update()
 			size_t payload_size = PNP1_PAYLOAD_SIZE;
 
 			px4_guid_t px4_guid;
-			board_get_px4_guid(px4_guid);
+			// board_get_px4_guid(px4_guid);
 			node_id_alloc_msg.unique_id_hash = (crc64(px4_guid, PNP_UNIQUE_ID_SIZE) & 0xFFFFFFFFFFFF);
 
 			const CanardTransferMetadata transfer_metadata = {

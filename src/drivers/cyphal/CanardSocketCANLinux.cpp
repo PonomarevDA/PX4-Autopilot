@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2022 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2020 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,59 +30,3 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************/
-
-#pragma once
-
-#include <canard.h>
-#include "o1heap/o1heap.h"
-#include "CanardInterface.hpp"
-
-class CanardHandle
-{
-	/*
-	* This memory is allocated for the 01Heap allocator used by
-	* libcanard to store incoming/outcoming data
-	* Current size of 8192 bytes is arbitrary, should be optimized further
-	* when more nodes and messages are on the CAN bus
-	*/
-	static constexpr unsigned HeapSize = 8192;
-
-public:
-	CanardHandle(uint32_t node_id, const size_t capacity, const size_t mtu_bytes);
-	~CanardHandle();
-
-	bool init();
-
-	void receive();
-	void transmit();
-
-	int32_t TxPush(const CanardMicrosecond             tx_deadline_usec,
-		       const CanardTransferMetadata *const metadata,
-		       const size_t                        payload_size,
-		       const void *const                   payload);
-
-	int8_t RxSubscribe(const CanardTransferKind    transfer_kind,
-			   const CanardPortID          port_id,
-			   const size_t                extent,
-			   const CanardMicrosecond     transfer_id_timeout_usec,
-			   CanardRxSubscription *const out_subscription);
-	int8_t RxUnsubscribe(const CanardTransferKind transfer_kind,
-			     const CanardPortID       port_id);
-	CanardTreeNode *getRxSubscriptions(CanardTransferKind kind);
-	O1HeapDiagnostics getO1HeapDiagnostics();
-
-	int32_t mtu();
-	CanardNodeID node_id();
-	void set_node_id(CanardNodeID id);
-
-private:
-	CanardInterface *_can_interface;
-
-	CanardInstance _canard_instance;
-
-	CanardTxQueue _queue;
-
-	static uint8_t _cyphal_heap[HeapSize] __attribute__((aligned (O1HEAP_ALIGNMENT)));
-	// void *_cyphal_heap{nullptr};
-
-};

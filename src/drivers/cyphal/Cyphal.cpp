@@ -111,9 +111,12 @@ CyphalNode::~CyphalNode()
 	perf_free(_cycle_perf);
 	perf_free(_interval_perf);
 }
-
+#include <systemlib/mavlink_log.h>
+static orb_advert_t mavlink_log_pub {nullptr};
 int CyphalNode::start(uint32_t node_id, uint32_t bitrate)
 {
+	mavlink_log_critical(&mavlink_log_pub, "CyphalNode: start");
+
 	if (_instance != nullptr) {
 		PX4_WARN("Already started");
 		return -1;
@@ -245,6 +248,7 @@ void CyphalNode::print_info()
 {
 	pthread_mutex_lock(&_node_mutex);
 
+	mavlink_log_critical(&mavlink_log_pub, "CyphalNode: print_info");
 	perf_print_counter(_cycle_perf);
 	perf_print_counter(_interval_perf);
 
