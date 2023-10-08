@@ -72,6 +72,10 @@ if DRIVERS_CYPHAL
             bool "Accelerometer Subscriber 0"
             default n
 
+        config CYPHAL_DPRES_SUBSCRIBER_0
+            bool "Differential Pressure Subscriber 0"
+            default n
+
         config CYPHAL_ESC_SUBSCRIBER
             bool "ESC Subscriber"
             default n

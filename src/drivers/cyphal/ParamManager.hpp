@@ -120,13 +120,14 @@ public:
 private:
 
 
-	const UavcanParamBinder _uavcan_params[31] {
+	const UavcanParamBinder _uavcan_params[32] {
 		{"uavcan.pub.udral.esc.0.id",                	"UCAN1_ESC_PUB",		px4_param_to_uavcan_port_id, uavcan_port_id_to_px4_param},
 		{"uavcan.pub.udral.readiness.0.id",            	"UCAN1_READ_PUB",		px4_param_to_uavcan_port_id, uavcan_port_id_to_px4_param},
 		{"uavcan.pub.udral.servo.0.id",              	"UCAN1_SERVO_PUB",		px4_param_to_uavcan_port_id, uavcan_port_id_to_px4_param},
 		{"uavcan.pub.udral.gps.0.id",                	"UCAN1_GPS_PUB",		px4_param_to_uavcan_port_id, uavcan_port_id_to_px4_param},
 		{"uavcan.pub.udral.actuator_outputs.0.id",   	"UCAN1_ACTR_PUB",		px4_param_to_uavcan_port_id, uavcan_port_id_to_px4_param},
 		{"uavcan.sub.udral.accel.0.id",                	"UCAN1_ACCEL_SUB",		px4_param_to_uavcan_port_id, uavcan_port_id_to_px4_param},
+		{"uavcan.sub.udral.aspd.dpres.0.id",           	"UCAN1_DPRES_SUB",		px4_param_to_uavcan_port_id, uavcan_port_id_to_px4_param},
 		{"uavcan.sub.udral.baro.pressure.0.id",		"UCAN1_BAROP0_SUB",		px4_param_to_uavcan_port_id, uavcan_port_id_to_px4_param},
 		{"uavcan.sub.udral.baro.temperature.0.id",	"UCAN1_BAROT0_SUB",		px4_param_to_uavcan_port_id, uavcan_port_id_to_px4_param},
 		{"uavcan.sub.udral.esc.0.id",                	"UCAN1_ESC0_SUB",		px4_param_to_uavcan_port_id, uavcan_port_id_to_px4_param},
@@ -156,7 +157,7 @@ private:
 		//{"uavcan.sub.bms.1.id",   "UCAN1_BMS1_SUB"},
 	};
 
-	CyphalTypeRegister _type_registers[20] {
+	CyphalTypeRegister _type_registers[21] {
 		{"uavcan.pub.udral.esc.0.type", 		"reg.udral.service.actuator.common.sp.Vector31"},
 		{"uavcan.pub.udral.readiness.0.type", 		"reg.udral.service.common.Readiness.0.1"},
 		{"uavcan.sub.zubax.feedback.0.type", 		"zubax.telega.CompactFeedback.0.1"},
@@ -180,6 +181,7 @@ private:
 
 		{"uavcan.sub.udral.range.0.type", 		"uavcan.si.sample.length.Scalar.1.0"},
 		{"uavcan.sub.udral.accel.0.type", 		"uavcan.si.sample.acceleration.Vector3.1.0"},
+		{"uavcan.sub.udral.aspd.dpres.0.type", 		"uavcan.si.sample.pressure.Scalar.1.0"},
 		{"uavcan.sub.udral.gyro.0.type", 		"uavcan.si.sample.angular_velocity.Vector3.1.0"},
 	};
 };
