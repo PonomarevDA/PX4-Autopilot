@@ -86,7 +86,7 @@ CyphalNode::CyphalNode(uint32_t node_id, size_t capacity, size_t mtu_bytes) :
 
 	_sub_manager.subscribe();
 
-	_mixing_output.mixingOutput().setMaxTopicUpdateRate(1000000 / 200);
+	_mixing_output.mixingOutput().setMaxTopicUpdateRate(1000000 / 400);
 }
 
 CyphalNode::~CyphalNode()
