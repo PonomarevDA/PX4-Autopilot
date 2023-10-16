@@ -117,6 +117,8 @@ public:
 
 			bat_status.remaining = source_ts.value.energy.joule / source_ts.value.full_energy.joule;
 
+			bat_status.time_remaining_s = NAN;  // Otherwise it triggers failsafe when arm:
+
 			// TODO uORB publication rate limiting
 			_battery_status_pub.publish(bat_status);
 
