@@ -48,6 +48,10 @@ if DRIVERS_CYPHAL
             bool "GNSS Publisher"
             default n
 
+        config CYPHAL_RGB_CONTROLLER_PUBLISHER
+            bool "RGB Controller Publisher"
+            default n
+
         config CYPHAL_ESC_CONTROLLER
             bool "ESC Controller"
             default n
