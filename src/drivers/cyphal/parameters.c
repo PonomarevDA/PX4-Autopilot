@@ -262,6 +262,16 @@ PARAM_DEFINE_INT32(UCAN1_ESC_PUB, -1);
 PARAM_DEFINE_INT32(UCAN1_READ_PUB, -1);
 
 /**
+ * Cyphal ESC RGB Controller port ID.
+ *
+ * @min -1
+ * @max 6143
+ * @group Cyphal
+ */
+PARAM_DEFINE_INT32(UCAN1_RGBLED_PUB, -1);
+
+
+/**
  * Cyphal ESC 0 zubax feedback port ID.
  *
  * @min -1
