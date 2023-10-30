@@ -96,6 +96,10 @@ if DRIVERS_CYPHAL
             bool "Gyroscope Subscriber 0"
             default n
 
+        config CYPHAL_IMU_SUBSCRIBER_0
+            bool "Imu Subscriber 0"
+            default n
+
         config CYPHAL_BAROMETER_SUBSCRIBER_0
             bool "Baro Subscriber 0"
             default n
