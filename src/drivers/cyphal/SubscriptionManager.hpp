@@ -61,6 +61,10 @@
 #define CONFIG_CYPHAL_ACCELEROMETER_SUBSCRIBER_0 0
 #endif
 
+#ifndef CONFIG_CYPHAL_AIRSPEED_SUBSCRIBER_0
+#define CONFIG_CYPHAL_AIRSPEED_SUBSCRIBER_0 0
+#endif
+
 #ifndef CONFIG_CYPHAL_BAROMETER_SUBSCRIBER_0
 #define CONFIG_CYPHAL_BAROMETER_SUBSCRIBER_0 0
 #endif
@@ -100,6 +104,7 @@
 	8 * CONFIG_CYPHAL_ESC_CONTROLLER + \
 	CONFIG_CYPHAL_GNSS_SUBSCRIBER_1 + \
 	CONFIG_CYPHAL_ACCELEROMETER_SUBSCRIBER_0 + \
+	CONFIG_CYPHAL_AIRSPEED_SUBSCRIBER_0 + \
 	CONFIG_CYPHAL_BAROMETER_SUBSCRIBER_0 + \
 	CONFIG_CYPHAL_DPRES_SUBSCRIBER_0 + \
 	CONFIG_CYPHAL_GYROSCOPE_SUBSCRIBER_0 + \
@@ -122,6 +127,7 @@
 #include "Subscribers/BaseSubscriber.hpp"
 #include "Subscribers/Heartbeat.hpp"
 #include "Subscribers/udral/Accelerometer.hpp"
+#include "Subscribers/udral/Airspeed.hpp"
 #include "Subscribers/udral/Battery.hpp"
 #include "Subscribers/udral/Barometer.hpp"
 #include "Subscribers/udral/DifferentialPressure.hpp"
@@ -177,6 +183,16 @@ private:
 				return new UavcanAccelerometerSubscriber(handle, pmgr, 0);
 			},
 			"udral.accel",
+			0
+		},
+#endif
+#if CONFIG_CYPHAL_AIRSPEED_SUBSCRIBER_0
+		{
+			[](CanardHandle & handle, UavcanParamManager & pmgr) -> UavcanDynamicPortSubscriber *
+			{
+				return new UavcanAirspeedSubscriber(handle, pmgr, 0);
+			},
+			"udral.aspd.cas",
 			0
 		},
 #endif

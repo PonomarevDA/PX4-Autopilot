@@ -78,6 +78,33 @@ PARAM_DEFINE_INT32(CYPHAL_BAUD, 1000000);
 PARAM_DEFINE_INT32(UCAN1_ACCEL_SUB, -1);
 
 /**
+ * Udral Airspeed TAS 0 subscription port ID.
+ *
+ * @min -1
+ * @max 6143
+ * @group Cyphal
+ */
+PARAM_DEFINE_INT32(UCAN1_ATAS0_SUB, -1);
+
+/**
+ * Udral Airspeed CAS 0 subscription port ID.
+ *
+ * @min -1
+ * @max 6143
+ * @group Cyphal
+ */
+PARAM_DEFINE_INT32(UCAN1_ACAS0_SUB, -1);
+
+/**
+ * Udral Airspeed Temperature 0 subscription port ID.
+ *
+ * @min -1
+ * @max 6143
+ * @group Cyphal
+ */
+PARAM_DEFINE_INT32(UCAN1_ATEM0_SUB, -1);
+
+/**
  * Udral Differential pressure 0 subscription port ID.
  *
  * @min -1
