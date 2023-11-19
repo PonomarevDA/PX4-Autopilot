@@ -84,6 +84,10 @@ if DRIVERS_CYPHAL
             bool "Differential Pressure Subscriber 0"
             default n
 
+        config CYPHAL_DPRES_SUBSCRIBER_1
+            bool "Differential Pressure Subscriber 1"
+            default n
+
         config CYPHAL_ESC_SUBSCRIBER
             bool "ESC Subscriber"
             default n
