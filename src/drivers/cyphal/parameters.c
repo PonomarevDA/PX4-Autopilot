@@ -111,7 +111,16 @@ PARAM_DEFINE_INT32(UCAN1_ATEM0_SUB, -1);
  * @max 6143
  * @group Cyphal
  */
-PARAM_DEFINE_INT32(UCAN1_DPRES_SUB, -1);
+PARAM_DEFINE_INT32(UCAN1_DPRES0_SUB, -1);
+
+/**
+ * Udral Differential pressure 1 subscription port ID.
+ *
+ * @min -1
+ * @max 6143
+ * @group Cyphal
+ */
+PARAM_DEFINE_INT32(UCAN1_DPRES1_SUB, -1);
 
 /**
  * ESC 0 subscription port ID.

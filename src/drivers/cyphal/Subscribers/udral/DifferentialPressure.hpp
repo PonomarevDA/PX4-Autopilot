@@ -78,7 +78,7 @@ public:
 		const hrt_abstime timestamp_sample = hrt_absolute_time();
 
 		_device_id.devid_s.devtype = DRV_DIFF_PRESS_DEVTYPE_UAVCAN;
-		_device_id.devid_s.address = receive.metadata.remote_node_id & 0xFF;
+		_device_id.devid_s.address = getInstance();
 
 		float diff_press_pa = msg.pascal;
 		float temperature_c = 21.5f;
@@ -87,7 +87,7 @@ public:
 		report.timestamp_sample = timestamp_sample;
 		report.device_id = _device_id.devid;
 		report.differential_pressure_pa = diff_press_pa;
-		report.temperature = temperature_c;
+		report.temperature = temperature_c + getInstance();
 		report.timestamp = hrt_absolute_time();
 
 		publishUorb(report);
@@ -96,7 +96,8 @@ public:
 	void publishUorb(const differential_pressure_s& report)
 	{
 		if (_orb_advert == nullptr) {
-			_orb_advert = orb_advertise_multi(ORB_TOPIC, &report, &_instance);
+			int instance = getInstance();
+			_orb_advert = orb_advertise_multi(ORB_TOPIC, &report, &instance);
 
 		} else {
 			(void)orb_publish(ORB_TOPIC, _orb_advert, &report);
@@ -106,5 +107,4 @@ public:
 private:
 	const orb_id_t ORB_TOPIC = ORB_ID(differential_pressure);
 	orb_advert_t _orb_advert{nullptr};
-	int _instance = 0;
 };

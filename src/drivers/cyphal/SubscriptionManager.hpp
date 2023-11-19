@@ -73,6 +73,10 @@
 #define CONFIG_CYPHAL_DPRES_SUBSCRIBER_0 0
 #endif
 
+#ifndef CONFIG_CYPHAL_DPRES_SUBSCRIBER_1
+#define CONFIG_CYPHAL_DPRES_SUBSCRIBER_1 0
+#endif
+
 #ifndef CONFIG_CYPHAL_GYROSCOPE_SUBSCRIBER_0
 #define CONFIG_CYPHAL_GYROSCOPE_SUBSCRIBER_0 0
 #endif
@@ -107,6 +111,7 @@
 	CONFIG_CYPHAL_AIRSPEED_SUBSCRIBER_0 + \
 	CONFIG_CYPHAL_BAROMETER_SUBSCRIBER_0 + \
 	CONFIG_CYPHAL_DPRES_SUBSCRIBER_0 + \
+	CONFIG_CYPHAL_DPRES_SUBSCRIBER_1 + \
 	CONFIG_CYPHAL_GYROSCOPE_SUBSCRIBER_0 + \
 	CONFIG_CYPHAL_IMU_SUBSCRIBER_0 + \
 	CONFIG_CYPHAL_MAGNETOMETER_SUBSCRIBER_0 + \
@@ -310,6 +315,16 @@ private:
 			},
 			"udral.aspd.dpres",
 			0
+		},
+#endif
+#if CONFIG_CYPHAL_DPRES_SUBSCRIBER_1
+		{
+			[](CanardHandle & handle, UavcanParamManager & pmgr) -> UavcanDynamicPortSubscriber *
+			{
+				return new UavcanDiffPressureSubscriber(handle, pmgr, 1);
+			},
+			"udral.aspd.dpres",
+			1
 		},
 #endif
 #if CONFIG_CYPHAL_GYROSCOPE_SUBSCRIBER_0
