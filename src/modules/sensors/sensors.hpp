@@ -49,6 +49,7 @@
 #include <uORB/PublicationMulti.hpp>
 #include <uORB/Subscription.hpp>
 #include <uORB/SubscriptionCallback.hpp>
+#include <uORB/SubscriptionMultiArray.hpp>
 #include "voted_sensors_update.h"
 #include "vehicle_imu/VehicleIMU.hpp"
 
@@ -179,21 +180,36 @@ private:
 	 */
 	void adc_poll();
 
-	uORB::Subscription _diff_pres_sub {ORB_ID(differential_pressure)};
+	static constexpr int MAX_NUM_AIRSPEED_SENSORS = 3; /**< Based on airspeed_selector_main.cpp */
+	int diff_press_instances[MAX_NUM_AIRSPEED_SENSORS];
+	orb_advert_t orb_advert[MAX_NUM_AIRSPEED_SENSORS] {nullptr, nullptr, nullptr};
+	uint8_t number_of_airspeed_sensors = 0;
+
+	uORB::SubscriptionMultiArray<airspeed_s, MAX_NUM_AIRSPEED_SENSORS> _diff_pres_subs{ORB_ID::differential_pressure};
 	uORB::Subscription _vehicle_air_data_sub{ORB_ID(vehicle_air_data)};
 
 	uORB::Publication<airspeed_s>             _airspeed_pub{ORB_ID(airspeed)};
 
-	DataValidator	_airspeed_validator;		/**< data validator to monitor airspeed */
+	struct DiffPressureData {
+		DataValidator airspeed_validator; /**< data validator to monitor airspeed */
+		uint64_t airspeed_last_publish{0};
+		uint64_t timestamp_sum{0};
+		float pressure_sum{0.f};
+		float temperature_sum{0.f};
+		float baro_pressure_sum{0.f};
+		int count{0};
 
-	float _diff_pres_pressure_sum{0.f};
-	float _diff_pres_temperature_sum{0.f};
-	float _baro_pressure_sum{0.f};
+		void reset()
+		{
+			timestamp_sum = 0;
+			pressure_sum = 0;
+			temperature_sum = 0;
+			baro_pressure_sum = 0;
+			count = 0;
+		}
+	};
 
-	int _diff_pres_count{0};
-
-	uint64_t _airspeed_last_publish{0};
-	uint64_t _diff_pres_timestamp_sum{0};
+	DiffPressureData _diff_pres[MAX_NUM_AIRSPEED_SENSORS];
 
 # ifdef ADC_AIRSPEED_VOLTAGE_CHANNEL
 	uORB::Subscription _adc_report_sub {ORB_ID(adc_report)};
