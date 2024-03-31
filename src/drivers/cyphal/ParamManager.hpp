@@ -179,7 +179,7 @@ private:
 		{"uavcan.sub.udral.gps.0.type", 		"reg.udral.physics.kinematics.geodetic.PointStateVarTs.0.1"},
 		{"uavcan.sub.udral.gps.sats.0.type", 		"uavcan.primitive.scalar.Integer16.1.0"},
 		{"uavcan.sub.udral.gps.status.0.type", 		"uavcan.primitive.scalar.Integer16.1.0"},
-		{"uavcan.sub.udral.gps.pdop.0.type", 		"uavcan.primitive.scalar.Integer16.1.0"},
+		{"uavcan.sub.udral.gps.pdop.0.type", 		"uavcan.primitive.scalar.Real32.1.0"},
 
 		{"uavcan.sub.udral.baro.pressure.0.type", 	"uavcan.si.sample.pressure.Scalar.1.0"},
 		{"uavcan.sub.udral.baro.temperature.0.type", 	"uavcan.si.sample.temperature.Scalar.1.0"},
