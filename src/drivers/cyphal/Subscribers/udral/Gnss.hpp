@@ -44,6 +44,7 @@
 // UDRAL Specification Messages
 #include <reg/udral/physics/kinematics/geodetic/PointStateVarTs_0_1.h>
 #include <uavcan/primitive/scalar/Integer16_1_0.h>
+#include <uavcan/primitive/scalar/Real32_1_0.h>
 #include <uORB/topics/sensor_gps.h>
 
 #include "../DynamicPortSubscriber.hpp"
@@ -101,7 +102,7 @@ public:
 		if (_pdop_sub._canard_sub.port_id != CANARD_PORT_ID_UNSET) {
 			_canard_handle.RxSubscribe(CanardTransferKindMessage,
 						   _pdop_sub._canard_sub.port_id,
-						   uavcan_primitive_scalar_Integer16_1_0_EXTENT_BYTES_,
+						   uavcan_primitive_scalar_Real32_1_0_EXTENT_BYTES_,
 						   CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC,
 						   &_pdop_sub._canard_sub);
 		}
@@ -163,7 +164,7 @@ public:
 
 	void parsePdop(const CanardRxTransfer &receive)
 	{
-		_report.hdop = parseInteger16(receive);
+		_report.hdop = parseReal32(receive);
 		_report.vdop = _report.hdop;
 	}
 
@@ -184,6 +185,20 @@ private:
 		size_t size_in_bytes = receive.payload_size;
 
 		if (0 != uavcan_primitive_scalar_Integer16_1_0_deserialize_(&msg,
+				(const uint8_t *)receive.payload,
+				&size_in_bytes)) {
+			return 0;
+		}
+
+		return msg.value;
+	}
+
+	float parseReal32(const CanardRxTransfer &receive)
+	{
+		uavcan_primitive_scalar_Real32_1_0 msg;
+		size_t size_in_bytes = receive.payload_size;
+
+		if (0 != uavcan_primitive_scalar_Real32_1_0_deserialize_(&msg,
 				(const uint8_t *)receive.payload,
 				&size_in_bytes)) {
 			return 0;
