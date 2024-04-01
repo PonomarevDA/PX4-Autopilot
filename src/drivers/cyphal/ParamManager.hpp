@@ -184,7 +184,7 @@ private:
 		{"uavcan.sub.udral.baro.pressure.0.type", 	"uavcan.si.sample.pressure.Scalar.1.0"},
 		{"uavcan.sub.udral.baro.temperature.0.type", 	"uavcan.si.sample.temperature.Scalar.1.0"},
 
-		{"uavcan.sub.udral.mag.0.type", 		"uavcan.si.sample.magnetic_field_strength.Vector3.1.0"},
+		{"uavcan.sub.udral.mag.0.type", 		"uavcan.si.sample.magnetic_field_strength.Vector3.1.1"},
 
 		{"uavcan.sub.udral.range.0.type", 		"uavcan.si.sample.length.Scalar.1.0"},
 		{"uavcan.sub.udral.accel.0.type", 		"uavcan.si.sample.acceleration.Vector3.1.0"},

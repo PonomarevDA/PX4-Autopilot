@@ -41,13 +41,14 @@
 
 #pragma once
 
-#include <uavcan/si/sample/magnetic_field_strength/Vector3_1_0.h>
+#include <uavcan/si/sample/magnetic_field_strength/Vector3_1_1.h>
 #include <lib/drivers/device/Device.hpp>
 #include <lib/drivers/magnetometer/PX4Magnetometer.hpp>
 
 #include "../DynamicPortSubscriber.hpp"
 
 #define TESLA_TO_GAUSS 10000.0f
+#define AMPER_PER_METER_TO_GAUSS 0.012566371f
 
 class UavcanMagnetometerSubscriber : public UavcanDynamicPortSubscriber
 {
@@ -67,7 +68,7 @@ public:
 
 		_canard_handle.RxSubscribe(CanardTransferKindMessage,
 					   _subj_sub._canard_sub.port_id,
-					   uavcan_si_sample_magnetic_field_strength_Vector3_1_0_EXTENT_BYTES_,
+					   uavcan_si_sample_magnetic_field_strength_Vector3_1_1_EXTENT_BYTES_,
 					   CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC,
 					   &_subj_sub._canard_sub);
 	};
@@ -78,18 +79,18 @@ public:
 			return;
 		}
 
-		uavcan_si_sample_magnetic_field_strength_Vector3_1_0 msg {};
+		uavcan_si_sample_magnetic_field_strength_Vector3_1_1 msg {};
 		size_t msg_size_in_bytes = receive.payload_size;
 
-		if (0 != uavcan_si_sample_magnetic_field_strength_Vector3_1_0_deserialize_(&msg,
+		if (0 != uavcan_si_sample_magnetic_field_strength_Vector3_1_1_deserialize_(&msg,
 				(const uint8_t *)receive.payload,
 				&msg_size_in_bytes)) {
 			return;
 		}
 
-		const float x = msg.tesla[0] * TESLA_TO_GAUSS;
-		const float y = msg.tesla[1] * TESLA_TO_GAUSS;
-		const float z = msg.tesla[2] * TESLA_TO_GAUSS;
+		const float x = msg.ampere_per_meter[0] * AMPER_PER_METER_TO_GAUSS;
+		const float y = msg.ampere_per_meter[1] * AMPER_PER_METER_TO_GAUSS;
+		const float z = msg.ampere_per_meter[2] * AMPER_PER_METER_TO_GAUSS;
 
 		mag->update(hrt_absolute_time(), x, y, z);
 	};
