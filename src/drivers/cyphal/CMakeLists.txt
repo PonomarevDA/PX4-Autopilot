@@ -33,6 +33,7 @@
 
 set(LIBCANARD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libcanard)
 set(DSDL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/public_regulated_data_types)
+set(DS015_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ds015)
 set(LEGACY_DSDL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/legacy_data_types)
 
 px4_add_git_submodule(TARGET git_libcanard PATH ${LIBCANARD_DIR})
@@ -43,6 +44,7 @@ find_program(NNVG_PATH nnvg)
 if(NNVG_PATH)
 	message("Generating Cyphal DSDL headers using Nunavut")
 	execute_process(COMMAND ${NNVG_PATH} --outdir ${CMAKE_CURRENT_BINARY_DIR}/dsdlc_generated --target-language c -I ${DSDL_DIR}/uavcan ${DSDL_DIR}/reg)
+	execute_process(COMMAND ${NNVG_PATH} --outdir ${CMAKE_CURRENT_BINARY_DIR}/dsdlc_generated --target-language c -I ${DSDL_DIR}/uavcan ${DS015_DIR})
 	execute_process(COMMAND ${NNVG_PATH} --outdir ${CMAKE_CURRENT_BINARY_DIR}/dsdlc_generated --target-language c -I ${LEGACY_DSDL_DIR}/uavcan ${LEGACY_DSDL_DIR}/legacy)
 	execute_process(COMMAND ${NNVG_PATH} --outdir ${CMAKE_CURRENT_BINARY_DIR}/dsdlc_generated --target-language c ${DSDL_DIR}/uavcan)
 else()

@@ -120,7 +120,7 @@ public:
 private:
 
 
-	const UavcanParamBinder _uavcan_params[38] {
+	const UavcanParamBinder _uavcan_params[36] {
 		{"uavcan.pub.udral.esc.0.id",                	"UCAN1_ESC_PUB",		px4_param_to_uavcan_port_id, uavcan_port_id_to_px4_param},
 		{"uavcan.pub.udral.readiness.0.id",            	"UCAN1_READ_PUB",		px4_param_to_uavcan_port_id, uavcan_port_id_to_px4_param},
 		{"uavcan.pub.udral.servo.0.id",              	"UCAN1_SERVO_PUB",		px4_param_to_uavcan_port_id, uavcan_port_id_to_px4_param},
@@ -137,9 +137,7 @@ private:
 		{"uavcan.sub.udral.baro.temperature.0.id",	"UCAN1_BAROT0_SUB",		px4_param_to_uavcan_port_id, uavcan_port_id_to_px4_param},
 		{"uavcan.sub.udral.esc.0.id",                	"UCAN1_ESC0_SUB",		px4_param_to_uavcan_port_id, uavcan_port_id_to_px4_param},
 		{"uavcan.sub.udral.gps.0.id",                	"UCAN1_GPS0_SUB",		px4_param_to_uavcan_port_id, uavcan_port_id_to_px4_param},
-		{"uavcan.sub.udral.gps.sats.0.id",		"UCAN1_GPSSA0_SUB",		px4_param_to_uavcan_port_id, uavcan_port_id_to_px4_param},
-		{"uavcan.sub.udral.gps.status.0.id",		"UCAN1_GPSST0_SUB",		px4_param_to_uavcan_port_id, uavcan_port_id_to_px4_param},
-		{"uavcan.sub.udral.gps.pdop.0.id",		"UCAN1_GPSPD0_SUB",		px4_param_to_uavcan_port_id, uavcan_port_id_to_px4_param},
+		{"uavcan.sub.udral.gps.cov.0.id",		"UCAN1_GPSCO0_SUB",		px4_param_to_uavcan_port_id, uavcan_port_id_to_px4_param},
 		{"uavcan.sub.udral.gps.1.id",                	"UCAN1_GPS1_SUB",		px4_param_to_uavcan_port_id, uavcan_port_id_to_px4_param},
 		{"uavcan.sub.udral.gyro.0.id",                	"UCAN1_GYRO_SUB",		px4_param_to_uavcan_port_id, uavcan_port_id_to_px4_param},
 		{"uavcan.sub.udral.imu.0.id",                	"UCAN1_IMU_SUB",		px4_param_to_uavcan_port_id, uavcan_port_id_to_px4_param},
@@ -163,7 +161,7 @@ private:
 		//{"uavcan.sub.bms.1.id",   "UCAN1_BMS1_SUB"},
 	};
 
-	CyphalTypeRegister _type_registers[27] {
+	CyphalTypeRegister _type_registers[25] {
 		{"uavcan.pub.udral.esc.0.type", 		"reg.udral.service.actuator.common.sp.Vector31"},
 		{"uavcan.pub.udral.readiness.0.type", 		"reg.udral.service.common.Readiness.0.1"},
 		{"uavcan.pub.udral.rgbled.0.type", 		"reg.udral.physics.optics.HighColor.0.1"},
@@ -177,9 +175,7 @@ private:
 		{"uavcan.sub.zubax.feedback.7.type", 		"zubax.telega.CompactFeedback.0.1"},
 
 		{"uavcan.sub.udral.gps.0.type", 		"reg.udral.physics.kinematics.geodetic.PointStateVarTs.0.1"},
-		{"uavcan.sub.udral.gps.sats.0.type", 		"uavcan.primitive.scalar.Integer16.1.0"},
-		{"uavcan.sub.udral.gps.status.0.type", 		"uavcan.primitive.scalar.Integer16.1.0"},
-		{"uavcan.sub.udral.gps.pdop.0.type", 		"uavcan.primitive.scalar.Real32.1.0"},
+		{"uavcan.sub.udral.gps.cov.0.type", 		"ds015.service.gnss.Covariance.0.1"},
 
 		{"uavcan.sub.udral.baro.pressure.0.type", 	"uavcan.si.sample.pressure.Scalar.1.0"},
 		{"uavcan.sub.udral.baro.temperature.0.type", 	"uavcan.si.sample.temperature.Scalar.1.0"},

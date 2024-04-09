@@ -141,31 +141,13 @@ PARAM_DEFINE_INT32(UCAN1_ESC0_SUB, -1);
 PARAM_DEFINE_INT32(UCAN1_GPS0_SUB, -1);
 
 /**
- * GPS 0 sats subscription port ID.
+ * GPS 0 covariance subscription port ID.
  *
  * @min -1
  * @max 6143
  * @group Cyphal
  */
-PARAM_DEFINE_INT32(UCAN1_GPSSA0_SUB, -1);
-
-/**
- * GPS 0 status subscription port ID.
- *
- * @min -1
- * @max 6143
- * @group Cyphal
- */
-PARAM_DEFINE_INT32(UCAN1_GPSST0_SUB, -1);
-
-/**
- * GPS 0 pdop subscription port ID.
- *
- * @min -1
- * @max 6143
- * @group Cyphal
- */
-PARAM_DEFINE_INT32(UCAN1_GPSPD0_SUB, -1);
+PARAM_DEFINE_INT32(UCAN1_GPSCO0_SUB, -1);
 
 /**
  * GPS 1 subscription port ID.
