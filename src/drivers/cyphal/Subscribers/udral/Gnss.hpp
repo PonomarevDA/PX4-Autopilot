@@ -48,6 +48,8 @@
 #include <uORB/topics/sensor_gps.h>
 
 #include "../DynamicPortSubscriber.hpp"
+#include "ds015/service/gnss/Gnss_0_1.h"
+
 
 class UavcanGnssSubscriber : public UavcanDynamicPortSubscriber
 {
@@ -55,22 +57,23 @@ public:
 	UavcanGnssSubscriber(CanardHandle &handle, UavcanParamManager &pmgr, uint8_t instance = 0) :
 		UavcanDynamicPortSubscriber(handle, pmgr, "udral.", "gps", instance)
 	{
-		_subj_sub.next = &_sats_sub;
+		_subj_sub.next = &_cov_sub;
 
-		_sats_sub._subject_name = "gps.sats";
-		_sats_sub._canard_sub.port_id = CANARD_PORT_ID_UNSET;
-		_sats_sub._canard_sub.user_reference = this;
-		_sats_sub.next = &_status_sub;
+		_cov_sub._subject_name = "gps.cov";
+		_cov_sub._canard_sub.port_id = CANARD_PORT_ID_UNSET;
+		_cov_sub._canard_sub.user_reference = this;
+		_cov_sub.next = nullptr;
 
-		_status_sub._subject_name = "gps.status";
-		_status_sub._canard_sub.port_id = CANARD_PORT_ID_UNSET;
-		_status_sub._canard_sub.user_reference = this;
-		_status_sub.next = &_pdop_sub;
+		// eph and epv should be -1 when unknown
+		_report.eph = -1.0F;
+		_report.epv = -1.0F;
 
-		_pdop_sub._subject_name = "gps.pdop";
-		_pdop_sub._canard_sub.port_id = CANARD_PORT_ID_UNSET;
-		_pdop_sub._canard_sub.user_reference = this;
-		_pdop_sub.next = nullptr;
+		_report.s_variance_m_s = -1.0F;
+		_report.c_variance_rad = -1.0F;
+
+		_report.heading = NAN;
+		_report.heading_offset = NAN;
+		_report.heading_accuracy = NAN;
 	};
 
 	void subscribe() override
@@ -78,33 +81,17 @@ public:
 		if (_subj_sub._canard_sub.port_id != CANARD_PORT_ID_UNSET) {
 			_canard_handle.RxSubscribe(CanardTransferKindMessage,
 						   _subj_sub._canard_sub.port_id,
-						   reg_udral_physics_kinematics_geodetic_PointStateVarTs_0_1_EXTENT_BYTES_,
+						   ds015_service_gnss_Gnss_0_1_EXTENT_BYTES_,
 						   CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC,
 						   &_subj_sub._canard_sub);
 		}
 
-		if (_sats_sub._canard_sub.port_id != CANARD_PORT_ID_UNSET) {
+		if (_cov_sub._canard_sub.port_id != CANARD_PORT_ID_UNSET) {
 			_canard_handle.RxSubscribe(CanardTransferKindMessage,
-						   _sats_sub._canard_sub.port_id,
-						   uavcan_primitive_scalar_Integer16_1_0_EXTENT_BYTES_,
+						   _cov_sub._canard_sub.port_id,
+						   24,
 						   CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC,
-						   &_sats_sub._canard_sub);
-		}
-
-		if (_status_sub._canard_sub.port_id != CANARD_PORT_ID_UNSET) {
-			_canard_handle.RxSubscribe(CanardTransferKindMessage,
-						   _status_sub._canard_sub.port_id,
-						   uavcan_primitive_scalar_Integer16_1_0_EXTENT_BYTES_,
-						   CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC,
-						   &_status_sub._canard_sub);
-		}
-
-		if (_pdop_sub._canard_sub.port_id != CANARD_PORT_ID_UNSET) {
-			_canard_handle.RxSubscribe(CanardTransferKindMessage,
-						   _pdop_sub._canard_sub.port_id,
-						   uavcan_primitive_scalar_Real32_1_0_EXTENT_BYTES_,
-						   CANARD_DEFAULT_TRANSFER_ID_TIMEOUT_USEC,
-						   &_pdop_sub._canard_sub);
+						   &_cov_sub._canard_sub);
 		}
 	};
 
@@ -114,58 +101,82 @@ public:
 			parsePoint(receive);
 			publishUorb();
 
-		} else if (receive.metadata.port_id == _sats_sub._canard_sub.port_id) {
-			parseSats(receive);
+		} else if (receive.metadata.port_id == _cov_sub._canard_sub.port_id) {
+			parseCovariance(receive);
 
-		} else if (receive.metadata.port_id == _status_sub._canard_sub.port_id) {
-			parseStatus(receive);
-
-		} else if (receive.metadata.port_id == _pdop_sub._canard_sub.port_id) {
-			parsePdop(receive);
 		}
 	};
 
 	void parsePoint(const CanardRxTransfer &receive)
 	{
-		reg_udral_physics_kinematics_geodetic_PointStateVarTs_0_1 geo {};
-		size_t geo_size_in_bytes = receive.payload_size;
+		ds015_service_gnss_Gnss_0_1 msg {};
+		auto payload = (const uint8_t *)receive.payload;
+		size_t msg_size_in_bytes = receive.payload_size;
 
-		if (0 != reg_udral_physics_kinematics_geodetic_PointStateVarTs_0_1_deserialize_(&geo,
-				(const uint8_t *)receive.payload,
-				&geo_size_in_bytes)) {
+		if (0 != ds015_service_gnss_Gnss_0_1_deserialize_(&msg, payload, &msg_size_in_bytes)) {
 			return;
 		}
 
 		_report.timestamp = hrt_absolute_time();
-		_report.latitude_deg = M_RAD_TO_DEG * geo.value.position.value.latitude;
-		_report.longitude_deg = M_RAD_TO_DEG * geo.value.position.value.longitude;
-		_report.altitude_msl_m = geo.value.position.value.altitude.meter;
+		_report.latitude_deg = M_RAD_TO_DEG * msg.point.latitude;
+		_report.longitude_deg = M_RAD_TO_DEG * msg.point.longitude;
+		_report.altitude_msl_m = msg.point.altitude.meter;
 		_report.altitude_ellipsoid_m = _report.altitude_msl_m;
 
-		_report.vel_n_m_s = geo.value.velocity.value.meter_per_second[0];
-		_report.vel_e_m_s = geo.value.velocity.value.meter_per_second[1];
-		_report.vel_d_m_s = geo.value.velocity.value.meter_per_second[2];
+		_report.vel_n_m_s = msg.velocity.meter_per_second[0];
+		_report.vel_e_m_s = msg.velocity.meter_per_second[1];
+		_report.vel_d_m_s = msg.velocity.meter_per_second[2];
 		_report.vel_m_s = sqrtf(_report.vel_n_m_s * _report.vel_n_m_s +
 					_report.vel_e_m_s * _report.vel_e_m_s +
 					_report.vel_d_m_s * _report.vel_d_m_s);
 		_report.cog_rad = atan2f(_report.vel_e_m_s, _report.vel_n_m_s);
 		_report.vel_ned_valid = true;
+
+		_report.satellites_used = msg.num_sats;
+		_report.fix_type = msg.status.status;
+		_report.hdop = msg.hdop;
+		_report.vdop = msg.vdop;
+
+		_report.eph = msg.horizontal_accuracy;
+		_report.epv = msg.vertical_accuracy;
+		_report.s_variance_m_s = msg.speed_accuracy;
+		_report.c_variance_rad = msg.yaw_accuracy.radian;
 	}
 
-	void parseSats(const CanardRxTransfer &receive)
+	void parseCovariance(const CanardRxTransfer &receive)
 	{
-		_report.satellites_used = parseInteger16(receive);
-	}
+		if (receive.payload_size != 24) {
+			return;
+		}
 
-	void parseStatus(const CanardRxTransfer &receive)
-	{
-		_report.fix_type = parseInteger16(receive);
-	}
+		const uint8_t* buffer = (const uint8_t *)receive.payload;
 
-	void parsePdop(const CanardRxTransfer &receive)
-	{
-		_report.hdop = parseReal32(receive);
-		_report.vdop = _report.hdop;
+		float pos_cov_nn = nunavutGetF16(buffer, 24, 16 * 0);
+		float pos_cov_ee = nunavutGetF16(buffer, 24, 16 * 3);
+		float pos_cov_dd = nunavutGetF16(buffer, 24, 16 * 5);
+		const float horizontal_pos_variance = math::max(pos_cov_nn, pos_cov_ee);
+		_report.eph = (horizontal_pos_variance > 0) ? sqrtf(horizontal_pos_variance) : -1.0F;
+		_report.epv = (pos_cov_dd > 0) ? sqrtf(pos_cov_dd) : -1.0F;
+
+		float vel_cov_nn = nunavutGetF16(buffer, 24, 16 * (6 + 0));
+		float vel_cov_ne = nunavutGetF16(buffer, 24, 16 * (6 + 1));
+		float vel_cov_ee = nunavutGetF16(buffer, 24, 16 * (6 + 3));
+		float vel_cov_dd = nunavutGetF16(buffer, 24, 16 * (6 + 5));
+
+		float vel_n = _report.vel_n_m_s;
+		float vel_e = _report.vel_e_m_s;
+		float vel_n_sq = vel_n * vel_n;
+		float vel_e_sq = vel_e * vel_e;
+
+		_report.s_variance_m_s = math::max(vel_cov_nn, vel_cov_ee, vel_cov_dd);
+		if (vel_n_sq < 0.001f && vel_e_sq < 0.001f) {
+			_report.c_variance_rad = -1.0f;
+		} else {
+			_report.c_variance_rad =
+				(vel_e_sq * vel_cov_nn +
+				-2 * vel_n * vel_e * vel_cov_ne +
+				vel_n_sq * vel_cov_ee) / ((vel_n_sq + vel_e_sq) * (vel_n_sq + vel_e_sq));
+		}
 	}
 
 	void publishUorb()
@@ -213,7 +224,5 @@ private:
 	int _instance = 0;
 	sensor_gps_s _report{};
 
-	SubjectSubscription _sats_sub;
-	SubjectSubscription _status_sub;
-	SubjectSubscription _pdop_sub;
+	SubjectSubscription _cov_sub;
 };
