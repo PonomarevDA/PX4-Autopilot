@@ -217,6 +217,7 @@ public:
 
 	void subscribe() override
 	{
+		_esc_status_pub.advertise();
 		_canard_handle.RxSubscribe(CanardTransferKindMessage,
 					   _subj_sub._canard_sub.port_id,
 					   zubax_telega_CompactFeedback_0_1_SERIALIZATION_BUFFER_SIZE_BYTES,
