@@ -27,3 +27,6 @@ else
 fi
 
 safety_button start
+
+ifup can0
+ifup can1
