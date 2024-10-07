@@ -392,16 +392,23 @@ else
 		#
 		# board sensors: rc.sensors
 		#
-		if param compare -s SYS_BOARD_SENS 1
+		set BOARD_RC_SENSORS ${R}etc/init.d/rc.board_sensors
+
+		#
+		# Keep nesting shallow.
+		# An additional nested if breaks initialization, so let's unset BOARD_RC_SENSORS instead.
+		#
+		if param compare -s SYS_BOARD_SENS 0
 		then
-			set BOARD_RC_SENSORS ${R}etc/init.d/rc.board_sensors
-			if [ -f $BOARD_RC_SENSORS ]
-			then
-				echo "Board sensors: ${BOARD_RC_SENSORS}"
-				. $BOARD_RC_SENSORS
-			fi
 			unset BOARD_RC_SENSORS
 		fi
+
+		if [ -f $BOARD_RC_SENSORS ]
+		then
+			echo "Board sensors: ${BOARD_RC_SENSORS}"
+			. $BOARD_RC_SENSORS
+		fi
+		unset BOARD_RC_SENSORS
 
 		. ${R}etc/init.d/rc.sensors
 
