@@ -118,6 +118,14 @@ public:
 		}
 
 		_report.timestamp = hrt_absolute_time();
+
+		constexpr uint64_t GPS_EPOCH_OFFSET_USEC = 315964800000000ULL;
+		constexpr uint64_t MICROSECONDS_IN_WEEK = 604800000000;  // 7*24*60*60*1e6;
+		uint64_t gps_time_usec = (static_cast<uint64_t>(msg.time_week) * MICROSECONDS_IN_WEEK) +
+					 (static_cast<uint64_t>(msg.time_week_ms) * 1000);
+		uint64_t gnss_ts_usec = gps_time_usec + GPS_EPOCH_OFFSET_USEC;
+		_report.time_utc_usec = gnss_ts_usec;
+
 		_report.latitude_deg = M_RAD_TO_DEG * msg.point.latitude;
 		_report.longitude_deg = M_RAD_TO_DEG * msg.point.longitude;
 		_report.altitude_msl_m = msg.point.altitude.meter;
@@ -141,6 +149,20 @@ public:
 		_report.epv = msg.vertical_accuracy;
 		_report.s_variance_m_s = msg.speed_accuracy;
 		_report.c_variance_rad = msg.yaw_accuracy.radian;
+
+		if ((_report.fix_type >= 2) && !_system_clock_set) {
+			timespec ts{};
+
+			// get the whole microseconds
+			ts.tv_sec = _report.time_utc_usec / 1000000ULL;
+
+			// get the remainder microseconds and convert to nanoseconds
+			ts.tv_nsec = (_report.time_utc_usec % 1000000ULL) * 1000;
+
+			px4_clock_settime(CLOCK_REALTIME, &ts);
+
+			_system_clock_set = true;
+		}
 	}
 
 	void parseCovariance(const CanardRxTransfer &receive)
@@ -149,7 +171,7 @@ public:
 			return;
 		}
 
-		const uint8_t* buffer = (const uint8_t *)receive.payload;
+		const uint8_t *buffer = (const uint8_t *)receive.payload;
 
 		float pos_cov_nn = nunavutGetF16(buffer, 24, 16 * 0);
 		float pos_cov_ee = nunavutGetF16(buffer, 24, 16 * 3);
@@ -169,13 +191,15 @@ public:
 		float vel_e_sq = vel_e * vel_e;
 
 		_report.s_variance_m_s = math::max(vel_cov_nn, vel_cov_ee, vel_cov_dd);
+
 		if (vel_n_sq < 0.001f && vel_e_sq < 0.001f) {
 			_report.c_variance_rad = -1.0f;
+
 		} else {
 			_report.c_variance_rad =
 				(vel_e_sq * vel_cov_nn +
-				-2 * vel_n * vel_e * vel_cov_ne +
-				vel_n_sq * vel_cov_ee) / ((vel_n_sq + vel_e_sq) * (vel_n_sq + vel_e_sq));
+				 -2 * vel_n * vel_e * vel_cov_ne +
+				 vel_n_sq * vel_cov_ee) / ((vel_n_sq + vel_e_sq) * (vel_n_sq + vel_e_sq));
 		}
 	}
 
@@ -223,6 +247,7 @@ private:
 
 	int _instance = 0;
 	sensor_gps_s _report{};
+	bool _system_clock_set{false};  ///< Have we set the system clock at least once from GNSS data?
 
 	SubjectSubscription _cov_sub;
 };
