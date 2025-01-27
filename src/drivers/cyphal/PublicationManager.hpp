@@ -48,6 +48,10 @@
 #define CONFIG_CYPHAL_GNSS_PUBLISHER 0
 #endif
 
+#ifndef CONFIG_CYPHAL_GRIPPER_CONTROLLER_PUBLISHER
+#define CONFIG_CYPHAL_GRIPPER_CONTROLLER_PUBLISHER 0
+#endif
+
 #ifndef CONFIG_CYPHAL_ESC_CONTROLLER
 #define CONFIG_CYPHAL_ESC_CONTROLLER 0
 #endif
@@ -67,6 +71,7 @@
 /* Preprocessor calculation of publisher count */
 
 #define UAVCAN_PUB_COUNT CONFIG_CYPHAL_GNSS_PUBLISHER + \
+	CONFIG_CYPHAL_GRIPPER_CONTROLLER_PUBLISHER + \
 	2 * CONFIG_CYPHAL_ESC_CONTROLLER + \
 	CONFIG_CYPHAL_READINESS_PUBLISHER + \
 	CONFIG_CYPHAL_UORB_ACTUATOR_OUTPUTS_PUBLISHER + \
@@ -83,6 +88,7 @@
 
 #include "Actuators/EscClient.hpp"
 #include "Publishers/udral/Readiness.hpp"
+#include "Publishers/udral/Gripper.hpp"
 #include "Publishers/udral/Gnss.hpp"
 #include "Publishers/uORB/uorb_publisher.hpp"
 
@@ -124,6 +130,18 @@ private:
 			0
 		},
 #endif
+
+#if CONFIG_CYPHAL_GRIPPER_CONTROLLER_PUBLISHER
+		{
+			[](CanardHandle & handle, UavcanParamManager & pmgr) -> UavcanPublisher *
+			{
+				return new GripperPublisher(handle, pmgr, 0);
+			},
+			"udral.gripper",
+			0
+		},
+#endif
+
 #if CONFIG_CYPHAL_ESC_CONTROLLER
 		{
 			[](CanardHandle & handle, UavcanParamManager & pmgr) -> UavcanPublisher *
