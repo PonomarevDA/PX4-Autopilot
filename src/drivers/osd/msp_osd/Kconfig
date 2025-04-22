@@ -1,6 +1,6 @@
 menuconfig DRIVERS_OSD_MSP_OSD
 	bool "msp_osd"
-	default n
+	default y
 	---help---
 		Enable support for msp_osd
 
